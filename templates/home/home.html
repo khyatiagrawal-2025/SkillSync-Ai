@@ -332,8 +332,20 @@ nav {
 .xb3 { background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.35); color:#4ade80; }
 
 /* Floating accent cards */
+.hero-visual {
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.accent-row {
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  flex-wrap:wrap;
+  width:100%;
+}
 .float-accent {
-  position:absolute;
+  position:relative;
   background:var(--surface); border:1px solid var(--rim2);
   border-radius:14px; padding:12px 16px;
   box-shadow:0 16px 40px rgba(0,0,0,.5);
@@ -342,12 +354,10 @@ nav {
   animation:floatAccent 5s ease-in-out infinite;
 }
 .float-accent::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent); }
-.fa-left { left:-90px; top:20%; animation-delay:0s; }
-.fa-right { right:-80px; top:40%; animation-delay:-2.5s; }
-.fa-bottom { left:50%; transform:translateX(-50%); bottom:-36px; animation-delay:-1.2s; }
+.fa-left  { animation-delay:0s; }
+.fa-right { animation-delay:-2.5s; }
+.fa-bottom { width:200px; text-align:center; animation-delay:-1.2s; }
 @keyframes floatAccent { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-.fa-bottom { animation:floatAccentB 5s ease-in-out infinite; }
-@keyframes floatAccentB { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-12px)} }
 .fa-label { font-size:.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; }
 .fa-value { font-weight:700; font-size:.9rem; }
 .fa-delta { font-size:.68rem; color:#4ade80; margin-top:2px; }
@@ -736,6 +746,9 @@ footer {
   <!-- HERO DASHBOARD VISUAL -->
   <div class="hero-visual">
 
+      <!-- ROW 1: THREE ACCENT CHIPS IN ONE LINE -->
+  <div class="accent-row">
+
     <!-- FLOATING ACCENT: LEFT -->
     <div class="float-accent fa-left">
       <div class="fa-label">🔥 Current Streak</div>
@@ -746,7 +759,7 @@ footer {
     <!-- FLOATING ACCENT: RIGHT -->
     <div class="float-accent fa-right">
       <div class="fa-label">⚡ XP This Week</div>
-      <div class="fa-value" style="background:var(--grad-a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">+640 XP</div>
+      <div class="fa-value" style="background:var(--grad-a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">+640 XP</div>
       <div class="fa-delta">↑ Top 5% this week</div>
     </div>
 
@@ -756,6 +769,8 @@ footer {
       <div class="fa-value" style="color:#a78bfa">AWS Certified</div>
       <div class="fa-delta">3 weeks away</div>
     </div>
+
+  </div>
 
     <div class="hero-card-main">
       <div class="card-topbar">
