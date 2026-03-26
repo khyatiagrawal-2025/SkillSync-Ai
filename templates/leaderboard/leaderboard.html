@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSync AI | Leaderboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #05070a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --neon-blue: #00d2ff;
+            --neon-pink: #ff00cc;
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Title with your Video's Gradient Effect */
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-style: italic;
+        }
+
+        .subtitle {
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        /* Glassmorphism Table Card */
+        .leaderboard-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .rank-cell {
+            font-weight: 800;
+            font-size: 1.2rem;
+            width: 60px;
+        }
+
+        /* Top 3 Highlighting */
+        .rank-1 { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .rank-2 { color: #C0C0C0; }
+        .rank-3 { color: #CD7F32; }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile img {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .points-cell {
+            text-align: right;
+            font-family: monospace;
+            font-size: 1.2rem;
+            background: linear-gradient(to right, #fff, var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        /* Glowing Button Effect like "Build My Roadmap" */
+        .back-btn {
+            margin-top: 30px;
+            padding: 12px 30px;
+            border-radius: 30px;
+            border: none;
+            background: linear-gradient(90deg, var(--neon-blue), #0082ff);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title">Top <span class="gradient-text">Talent.</span></div>
+    <div class="subtitle">SkillSync AI community's top performers this week.</div>
+
+    <div class="leaderboard-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Developer</th>
+                    <th style="text-align: right;">Experience XP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                <tr>
+                    <td class="rank-cell {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% endif %}">
+                        {{ forloop.counter|stringformat:"02d" }}
+                    </td>
+                    <td>
+                        <div class="user-profile">
+                            <img src="https://ui-avatars.com/api/?name={{ player.user.username }}&background=random&color=fff" alt="avatar">
+                            <span class="username">{{ player.user.username }}</span>
+                        </div>
+                    </td>
+                    <td class="points-cell">{{ player.points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <button class="back-btn">Go to Dashboard</button>
+
+</body>
+</html>
