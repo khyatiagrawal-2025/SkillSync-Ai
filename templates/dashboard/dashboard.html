@@ -1,0 +1,843 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillSync AI — Dashboard</title>
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Fonts: Syne (display) + DM Sans (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Chart.js (only dep) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Syne', 'sans-serif'],
+          body: ['DM Sans', 'sans-serif'],
+        },
+        colors: {
+          ink:    '#07070f',
+          ink2:   '#0d0d1c',
+          surface:'#111126',
+          glass:  'rgba(255,255,255,0.04)',
+        },
+        animation: {
+          'blob1':   'blob1 20s ease-in-out infinite',
+          'blob2':   'blob2 25s ease-in-out infinite',
+          'blob3':   'blob3 18s ease-in-out infinite',
+          'fadein':  'fadein .7s ease both',
+          'slideup': 'slideup .6s cubic-bezier(.16,1,.3,1) both',
+          'pulse-slow':'pulse 3s ease-in-out infinite',
+          'bar-fill': 'barfill 1.4s cubic-bezier(.34,1.56,.64,1) both',
+          'glow-ping':'glowping 2s ease-in-out infinite',
+        },
+        keyframes: {
+          blob1: {
+            '0%,100%':{ transform:'translate(0,0) scale(1)' },
+            '33%':    { transform:'translate(80px,-60px) scale(1.1)' },
+            '66%':    { transform:'translate(-40px,40px) scale(.9)' },
+          },
+          blob2: {
+            '0%,100%':{ transform:'translate(0,0) scale(1)' },
+            '40%':    { transform:'translate(-100px,60px) scale(1.08)' },
+            '70%':    { transform:'translate(60px,-80px) scale(.95)' },
+          },
+          blob3: {
+            '0%,100%':{ transform:'translate(0,0) scale(1)' },
+            '50%':    { transform:'translate(60px,60px) scale(1.12)' },
+          },
+          fadein:  { from:{ opacity:0 }, to:{ opacity:1 } },
+          slideup: { from:{ opacity:0, transform:'translateY(24px)' }, to:{ opacity:1, transform:'translateY(0)' } },
+          barfill: { from:{ width:'0%' }, to:{} },
+          glowping:{ '0%,100%':{ boxShadow:'0 0 16px 2px rgba(167,139,250,.35)' }, '50%':{ boxShadow:'0 0 32px 6px rgba(167,139,250,.65)' } },
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  /* ── Base ── */
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:'DM Sans',sans-serif;
+    background:#07070f;
+    color:#e2e8f0;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+
+  /* ── Animated BG blobs ── */
+  .blob {
+    position:fixed; border-radius:50%;
+    filter:blur(100px); opacity:.22; pointer-events:none; z-index:0;
+  }
+  .blob-1 { width:700px;height:700px; background:radial-gradient(circle,#6d28d9,transparent 70%); top:-200px;left:-150px; animation:blob1 20s ease-in-out infinite; }
+  .blob-2 { width:600px;height:600px; background:radial-gradient(circle,#2563eb,transparent 70%); top:30%;right:-200px; animation:blob2 25s ease-in-out infinite; }
+  .blob-3 { width:450px;height:450px; background:radial-gradient(circle,#db2777,transparent 70%); bottom:-100px;left:35%; animation:blob3 18s ease-in-out infinite; }
+  @keyframes blob1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(80px,-60px) scale(1.1)} 66%{transform:translate(-40px,40px) scale(.9)} }
+  @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-100px,60px) scale(1.08)} 70%{transform:translate(60px,-80px) scale(.95)} }
+  @keyframes blob3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,60px) scale(1.12)} }
+
+  /* Grid overlay */
+  .grid-overlay {
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:52px 52px;
+  }
+
+  /* ── Glass card ── */
+  .glass {
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-radius:18px;
+    position:relative; overflow:hidden;
+    transition:transform .25s cubic-bezier(.16,1,.3,1),
+               border-color .25s, box-shadow .25s;
+  }
+  .glass::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+  }
+  .glass:hover {
+    transform:translateY(-4px);
+    border-color:rgba(167,139,250,.28);
+    box-shadow:0 20px 50px rgba(0,0,0,.45), 0 0 30px rgba(109,40,217,.18);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar { width:228px; flex-shrink:0; }
+  .sidebar-link {
+    display:flex; align-items:center; gap:11px;
+    padding:11px 14px; border-radius:12px;
+    font-size:.875rem; font-weight:500;
+    color:rgba(226,232,240,.5);
+    transition:all .2s; cursor:pointer; text-decoration:none;
+  }
+  .sidebar-link:hover { background:rgba(255,255,255,.06); color:#e2e8f0; }
+  .sidebar-link.active {
+    background:rgba(109,40,217,.2);
+    border:1px solid rgba(109,40,217,.35);
+    color:#c4b5fd;
+    box-shadow:0 0 16px rgba(109,40,217,.2);
+  }
+  .sidebar-icon { width:18px; height:18px; flex-shrink:0; }
+
+  /* ── Stat cards ── */
+  .stat-card {
+    cursor:default;
+  }
+  .stat-card:hover .stat-icon { transform:scale(1.15) rotate(-5deg); }
+  .stat-icon { transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+
+  /* ── Progress bars ── */
+  .skill-bar-fill { animation:barfill 1.4s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes barfill { from{width:0} }
+
+  /* ── XP bar ── */
+  .xp-fill { position:relative; overflow:hidden; }
+  .xp-fill::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.3) 50%,transparent 100%);
+    animation:shimmer 2.5s infinite;
+    transform:translateX(-100%);
+  }
+  @keyframes shimmer { to{transform:translateX(200%)} }
+
+  /* ── Task checkbox ── */
+  .task-check { display:none; }
+  .task-label {
+    display:flex; align-items:center; gap:11px;
+    cursor:pointer; padding:12px 14px; border-radius:12px;
+    transition:background .2s;
+    font-size:.875rem;
+  }
+  .task-label:hover { background:rgba(255,255,255,.04); }
+  .task-box {
+    width:18px; height:18px; border-radius:6px;
+    border:1.5px solid rgba(255,255,255,.2);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    transition:all .2s; font-size:.65rem;
+  }
+  .task-check:checked + .task-label .task-box {
+    background:linear-gradient(135deg,#6d28d9,#2563eb);
+    border-color:transparent; color:#fff;
+  }
+  .task-check:checked + .task-label .task-text { text-decoration:line-through; opacity:.45; }
+  .task-text { transition:all .2s; }
+
+  /* ── Badges ── */
+  .badge { display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:999px; font-size:.72rem; font-weight:700; letter-spacing:.04em; }
+
+  /* ── AI Chat button ── */
+  .ai-fab {
+    position:fixed; bottom:28px; right:28px; z-index:99;
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,#6d28d9,#2563eb);
+    border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4rem;
+    box-shadow:0 0 30px rgba(109,40,217,.55), 0 8px 24px rgba(0,0,0,.4);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+    animation:glowping 2s ease-in-out infinite;
+  }
+  @keyframes glowping { 0%,100%{box-shadow:0 0 20px 2px rgba(109,40,217,.5)} 50%{box-shadow:0 0 38px 8px rgba(109,40,217,.8)} }
+  .ai-fab:hover { transform:scale(1.12) rotate(8deg); box-shadow:0 0 50px rgba(109,40,217,.8); }
+
+  /* ── AI popup ── */
+  .ai-popup {
+    position:fixed; bottom:98px; right:28px; z-index:98;
+    width:300px;
+    display:none;
+  }
+  .ai-popup.open { display:block; animation:slideup .4s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes slideup { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── Motivation card glow ── */
+  .motive-card { animation:glowcard 3s ease-in-out infinite; }
+  @keyframes glowcard { 0%,100%{box-shadow:0 0 24px rgba(109,40,217,.3)} 50%{box-shadow:0 0 48px rgba(109,40,217,.55),0 0 24px rgba(37,99,235,.35)} }
+
+  /* ── Stagger fade-in for cards ── */
+  .stagger-1 { animation:slideup .65s cubic-bezier(.16,1,.3,1) .05s both; }
+  .stagger-2 { animation:slideup .65s cubic-bezier(.16,1,.3,1) .12s both; }
+  .stagger-3 { animation:slideup .65s cubic-bezier(.16,1,.3,1) .19s both; }
+  .stagger-4 { animation:slideup .65s cubic-bezier(.16,1,.3,1) .26s both; }
+  .stagger-5 { animation:slideup .65s cubic-bezier(.16,1,.3,1) .33s both; }
+  .stagger-6 { animation:slideup .65s cubic-bezier(.16,1,.3,1) .40s both; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(109,40,217,.4); border-radius:8px; }
+
+  /* ── Responsive ── */
+  @media(max-width:1024px) { .sidebar { display:none; } }
+  @media(max-width:640px) {
+    .stat-grid { grid-template-columns:1fr 1fr !important; }
+    .main-grid { grid-template-columns:1fr !important; }
+  }
+</style>
+</head>
+
+<body class="font-body">
+
+<!-- ─── AMBIENT LAYER ──────────────────────────────────── -->
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<div class="grid-overlay"></div>
+
+<!-- ─── WRAPPER ───────────────────────────────────────── -->
+<div class="relative z-10 min-h-screen flex flex-col">
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!--  NAVBAR                                           -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <header class="sticky top-0 z-50 flex items-center justify-between px-6 py-3.5"
+          style="background:rgba(7,7,15,.75);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.07)">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black text-white"
+           style="background:linear-gradient(135deg,#6d28d9,#2563eb);box-shadow:0 0 18px rgba(109,40,217,.5)">S</div>
+      <span class="font-display font-bold text-base tracking-tight"
+            style="background:linear-gradient(135deg,#c4b5fd,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+        SkillSync AI
+      </span>
+    </div>
+
+    <!-- Right: notif + avatar -->
+    <div class="flex items-center gap-3">
+      <!-- Notification -->
+      <button class="relative p-2 rounded-xl transition-all hover:bg-white/5"
+              style="border:1px solid rgba(255,255,255,.08)">
+        <svg class="w-4.5 h-4.5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;color:#94a3b8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
+              style="background:#ec4899;box-shadow:0 0 6px rgba(236,72,153,.8)"></span>
+      </button>
+
+      <!-- Avatar -->
+      <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl cursor-pointer transition-all hover:bg-white/5"
+           style="border:1px solid rgba(255,255,255,.08)">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+             style="background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div>
+        <span class="text-sm font-medium text-slate-300">Khyati</span>
+        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:#64748b">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!--  BODY: SIDEBAR + MAIN                             -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- ─ SIDEBAR ──────────────────────────────────── -->
+    <aside class="sidebar hidden lg:flex flex-col gap-1 px-3 py-6 shrink-0"
+           style="background:rgba(7,7,15,.6);border-right:1px solid rgba(255,255,255,.06);backdrop-filter:blur(20px)">
+
+      <div class="px-3 mb-4">
+        <p class="text-xs font-semibold tracking-widest uppercase" style="color:rgba(148,163,184,.4)">Navigation</p>
+      </div>
+
+      <a class="sidebar-link active" href="#">
+        <!-- dashboard icon -->
+        <svg class="sidebar-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>
+        Roadmap
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Progress
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        Achievements
+      </a>
+
+      <div class="px-3 mt-6 mb-2">
+        <p class="text-xs font-semibold tracking-widest uppercase" style="color:rgba(148,163,184,.4)">Account</p>
+      </div>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        Settings
+      </a>
+
+      <!-- Sidebar bottom: mini profile -->
+      <div class="mt-auto mx-1 p-3 rounded-14 glass" style="border-radius:14px">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+               style="background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-slate-200 truncate">Khyati Sharma</div>
+            <div class="text-xs" style="color:rgba(148,163,184,.6)">Level 7 · Backend Dev</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─ MAIN CONTENT ────────────────────────────── -->
+    <main class="flex-1 overflow-y-auto px-6 py-7" style="max-height:calc(100vh - 57px)">
+
+      <!-- ── HERO GREETING ─────────────────────────── -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-8 stagger-1">
+
+        <!-- Left: greeting -->
+        <div class="flex items-center gap-4">
+          <!-- Avatar -->
+          <div class="relative shrink-0">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black text-white"
+                 style="background:linear-gradient(135deg,#6d28d9,#ec4899,#2563eb);box-shadow:0 0 28px rgba(109,40,217,.5)">K</div>
+            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 text-center flex items-center justify-center text-xs"
+                  style="background:#6d28d9;border-color:#07070f;font-size:7px">✦</span>
+          </div>
+          <div>
+            <h1 class="font-display font-bold text-2xl tracking-tight leading-tight text-white">
+              Hello, Khyati 👋
+            </h1>
+            <p class="text-sm mt-0.5" style="color:rgba(148,163,184,.75)">Let's build your career today 🚀</p>
+          </div>
+        </div>
+
+        <!-- Right: streak + level chips -->
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+               style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fbbf24">
+            🔥 12-Day Streak
+          </div>
+          <div class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+               style="background:rgba(109,40,217,.15);border:1px solid rgba(109,40,217,.35);color:#c4b5fd">
+            ⚡ Level 7
+          </div>
+          <div class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+               style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#4ade80">
+            2,840 XP
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MOTIVATION CARD ────────────────────────── -->
+      <div class="glass motive-card p-4 mb-7 flex items-center gap-4 stagger-2"
+           style="background:linear-gradient(135deg,rgba(109,40,217,.18),rgba(37,99,235,.12));border-color:rgba(109,40,217,.3)">
+        <div class="text-2xl shrink-0">✨</div>
+        <div>
+          <p class="font-semibold text-sm text-white">You're on fire, Khyati! Keep your streak alive 🔥</p>
+          <p class="text-xs mt-0.5" style="color:rgba(148,163,184,.65)">Top 5% this week · 3 tasks away from your next badge</p>
+        </div>
+        <div class="ml-auto shrink-0">
+          <span class="badge text-xs" style="background:rgba(109,40,217,.2);border:1px solid rgba(109,40,217,.4);color:#a78bfa">🏆 On a roll!</span>
+        </div>
+      </div>
+
+      <!-- ── STAT CARDS ─────────────────────────────── -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7 stat-grid">
+
+        <!-- Completed Tasks -->
+        <div class="glass p-5 stat-card stagger-2 cursor-default">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center stat-icon text-lg"
+                 style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3)">✅</div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-lg"
+                  style="background:rgba(16,185,129,.12);color:#4ade80">+8 this week</span>
+          </div>
+          <div class="font-display font-bold text-3xl text-white mb-1">47</div>
+          <div class="text-xs font-medium" style="color:rgba(148,163,184,.6)">Completed Tasks</div>
+        </div>
+
+        <!-- Pending Tasks -->
+        <div class="glass p-5 stat-card stagger-3 cursor-default">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center stat-icon text-lg"
+                 style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3)">📋</div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-lg"
+                  style="background:rgba(245,158,11,.12);color:#fbbf24">Due today: 3</span>
+          </div>
+          <div class="font-display font-bold text-3xl text-white mb-1">12</div>
+          <div class="text-xs font-medium" style="color:rgba(148,163,184,.6)">Pending Tasks</div>
+        </div>
+
+        <!-- XP Points -->
+        <div class="glass p-5 stat-card stagger-4 cursor-default">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center stat-icon text-lg"
+                 style="background:rgba(109,40,217,.15);border:1px solid rgba(109,40,217,.3)">⚡</div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-lg"
+                  style="background:rgba(109,40,217,.15);color:#c4b5fd">+320 today</span>
+          </div>
+          <div class="font-display font-bold text-3xl text-white mb-1">2,840</div>
+          <div class="text-xs font-medium" style="color:rgba(148,163,184,.6)">XP Points</div>
+        </div>
+
+        <!-- Current Level -->
+        <div class="glass p-5 stat-card stagger-5 cursor-default">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center stat-icon text-lg"
+                 style="background:rgba(236,72,153,.15);border:1px solid rgba(236,72,153,.3)">🏅</div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-lg"
+                  style="background:rgba(236,72,153,.12);color:#f9a8d4">160 XP to L8</span>
+          </div>
+          <div class="font-display font-bold text-3xl text-white mb-1">7</div>
+          <div class="text-xs font-medium" style="color:rgba(148,163,184,.6)">Current Level</div>
+        </div>
+      </div>
+
+      <!-- ── MAIN GRID ───────────────────────────────── -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 main-grid">
+
+        <!-- LEFT COL (span 2): Chart + Tasks -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+
+          <!-- CHART -->
+          <div class="glass p-6 stagger-3">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h2 class="font-display font-bold text-base text-white">Weekly Progress</h2>
+                <p class="text-xs mt-0.5" style="color:rgba(148,163,184,.55)">XP earned per day this week</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                        style="background:rgba(109,40,217,.2);border:1px solid rgba(109,40,217,.4);color:#c4b5fd">Week</button>
+                <button class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-white/5"
+                        style="color:rgba(148,163,184,.5)">Month</button>
+              </div>
+            </div>
+            <div style="height:180px">
+              <canvas id="progressChart"></canvas>
+            </div>
+          </div>
+
+          <!-- TODAY'S TASKS -->
+          <div class="glass p-6 stagger-4">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h2 class="font-display font-bold text-base text-white">Today's Tasks</h2>
+                <p class="text-xs mt-0.5" style="color:rgba(148,163,184,.55)">Sunday, 25 March 2026</p>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-lg font-semibold"
+                    style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#4ade80">3 / 5 done</span>
+            </div>
+
+            <div class="flex flex-col gap-0.5">
+
+              <!-- Task 1 - done -->
+              <input type="checkbox" id="t1" class="task-check" checked>
+              <label for="t1" class="task-label">
+                <div class="task-box" style="background:linear-gradient(135deg,#6d28d9,#2563eb);border-color:transparent;color:#fff;font-size:.65rem">✓</div>
+                <span class="task-text" style="text-decoration:line-through;opacity:.4">Read MongoDB Aggregation docs</span>
+                <span class="ml-auto text-xs" style="color:rgba(148,163,184,.35)">Done</span>
+              </label>
+
+              <!-- Task 2 - done -->
+              <input type="checkbox" id="t2" class="task-check" checked>
+              <label for="t2" class="task-label">
+                <div class="task-box" style="background:linear-gradient(135deg,#6d28d9,#2563eb);border-color:transparent;color:#fff;font-size:.65rem">✓</div>
+                <span class="task-text" style="text-decoration:line-through;opacity:.4">Build Blog API schema</span>
+                <span class="ml-auto text-xs" style="color:rgba(148,163,184,.35)">Done</span>
+              </label>
+
+              <!-- Task 3 - done -->
+              <input type="checkbox" id="t3" class="task-check" checked>
+              <label for="t3" class="task-label">
+                <div class="task-box" style="background:linear-gradient(135deg,#6d28d9,#2563eb);border-color:transparent;color:#fff;font-size:.65rem">✓</div>
+                <span class="task-text" style="text-decoration:line-through;opacity:.4">Watch Express.js middleware video</span>
+                <span class="ml-auto text-xs" style="color:rgba(148,163,184,.35)">Done</span>
+              </label>
+
+              <!-- Task 4 - pending -->
+              <input type="checkbox" id="t4" class="task-check">
+              <label for="t4" class="task-label">
+                <div class="task-box"></div>
+                <span class="task-text">Implement JWT authentication</span>
+                <span class="ml-auto text-xs px-2 py-0.5 rounded-md"
+                      style="background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.25)">Today</span>
+              </label>
+
+              <!-- Task 5 - pending -->
+              <input type="checkbox" id="t5" class="task-check">
+              <label for="t5" class="task-label">
+                <div class="task-box"></div>
+                <span class="task-text">Deploy Blog API to Railway</span>
+                <span class="ml-auto text-xs px-2 py-0.5 rounded-md"
+                      style="background:rgba(236,72,153,.1);color:#f9a8d4;border:1px solid rgba(236,72,153,.2)">High</span>
+              </label>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COL: Gamification + Roadmap -->
+        <div class="flex flex-col gap-6">
+
+          <!-- GAMIFICATION -->
+          <div class="glass p-6 stagger-4">
+            <h2 class="font-display font-bold text-base text-white mb-1">🏆 Gamification</h2>
+            <p class="text-xs mb-5" style="color:rgba(148,163,184,.55)">Keep the momentum going!</p>
+
+            <!-- Streak -->
+            <div class="mb-5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold text-white">🔥 Daily Streak</span>
+                <span class="font-display font-bold text-sm" style="color:#fbbf24">12 days</span>
+              </div>
+              <!-- Streak dots -->
+              <div class="flex gap-1.5 flex-wrap">
+                {% for i in "1234567890AB" %}
+                  <div class="w-6 h-6 rounded-md flex items-center justify-center text-xs"
+                       style="background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 0 8px rgba(245,158,11,.45)">🔥</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- XP Bar -->
+            <div class="mb-5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold" style="color:rgba(148,163,184,.7)">XP Progress</span>
+                <span class="text-xs font-semibold" style="color:#c4b5fd">2,840 / 3,000</span>
+              </div>
+              <div class="h-2.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+                <div class="h-full rounded-full xp-fill skill-bar-fill"
+                     style="width:94.6%;background:linear-gradient(90deg,#6d28d9,#2563eb,#06b6d4);box-shadow:0 0 10px rgba(109,40,217,.55)"></div>
+              </div>
+              <p class="text-xs mt-1.5" style="color:rgba(148,163,184,.45)">160 XP to reach Level 8</p>
+            </div>
+
+            <!-- Badges -->
+            <div>
+              <p class="text-xs font-semibold mb-3" style="color:rgba(148,163,184,.6)">Your Badges</p>
+              <div class="flex flex-wrap gap-2">
+                <span class="badge" style="background:rgba(109,40,217,.2);border:1px solid rgba(109,40,217,.35);color:#c4b5fd">🚀 Launcher</span>
+                <span class="badge" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#4ade80">✅ Consistent</span>
+                <span class="badge" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fbbf24">🔥 On Fire</span>
+                <span class="badge" style="background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);color:#93c5fd">⚡ Speedster</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROADMAP SNAPSHOT -->
+          <div class="glass p-6 stagger-5"
+               style="background:linear-gradient(135deg,rgba(109,40,217,.14),rgba(37,99,235,.08));border-color:rgba(109,40,217,.25)">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-base">🗺️</span>
+              <h2 class="font-display font-bold text-base text-white">Roadmap Snapshot</h2>
+            </div>
+
+            <div class="space-y-3">
+              <div class="p-3 rounded-xl" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">
+                <p class="text-xs font-semibold mb-0.5" style="color:rgba(148,163,184,.5)">CURRENT WEEK</p>
+                <p class="text-sm font-semibold text-white">Week 5 — MongoDB & Mongoose</p>
+              </div>
+              <div class="p-3 rounded-xl" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)">
+                <p class="text-xs font-semibold mb-0.5" style="color:rgba(251,191,36,.6)">CURRENT TOPIC 🔥</p>
+                <p class="text-sm font-semibold" style="color:#fbbf24">Aggregation Pipelines</p>
+              </div>
+              <div class="p-3 rounded-xl" style="background:rgba(109,40,217,.1);border:1px solid rgba(109,40,217,.25)">
+                <p class="text-xs font-semibold mb-0.5" style="color:rgba(196,181,253,.5)">NEXT GOAL</p>
+                <p class="text-sm font-semibold" style="color:#c4b5fd">Week 6 — JWT Auth & Security</p>
+              </div>
+            </div>
+
+            <button class="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold transition-all text-center"
+                    style="background:rgba(109,40,217,.2);border:1px solid rgba(109,40,217,.35);color:#c4b5fd"
+                    onmouseover="this.style.background='rgba(109,40,217,.35)'"
+                    onmouseout="this.style.background='rgba(109,40,217,.2)'">
+              View Full Roadmap →
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SKILL PROGRESS ─────────────────────────── -->
+      <div class="glass p-6 mb-6 stagger-5">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="font-display font-bold text-base text-white">Skill Progress</h2>
+            <p class="text-xs mt-0.5" style="color:rgba(148,163,184,.55)">Your current skill gap analysis</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-lg"
+                style="background:rgba(109,40,217,.12);border:1px solid rgba(109,40,217,.25);color:#a78bfa">AI-Generated</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          <!-- HTML -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold text-white">HTML / CSS</span>
+              <span class="text-xs font-bold" style="color:#4ade80">92%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+              <div class="h-full rounded-full skill-bar-fill" style="width:92%;background:linear-gradient(90deg,#10b981,#4ade80);box-shadow:0 0 8px rgba(16,185,129,.4)"></div>
+            </div>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,.4)">Expert level</p>
+          </div>
+
+          <!-- Django -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold text-white">Django / Python</span>
+              <span class="text-xs font-bold" style="color:#c4b5fd">74%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+              <div class="h-full rounded-full skill-bar-fill" style="width:74%;background:linear-gradient(90deg,#6d28d9,#a78bfa);box-shadow:0 0 8px rgba(109,40,217,.4)"></div>
+            </div>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,.4)">Advanced</p>
+          </div>
+
+          <!-- DSA -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold text-white">DSA / Algorithms</span>
+              <span class="text-xs font-bold" style="color:#93c5fd">58%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+              <div class="h-full rounded-full skill-bar-fill" style="width:58%;background:linear-gradient(90deg,#2563eb,#06b6d4);box-shadow:0 0 8px rgba(37,99,235,.4)"></div>
+            </div>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,.4)">Intermediate · Needs focus</p>
+          </div>
+
+          <!-- System Design -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold text-white">System Design</span>
+              <span class="text-xs font-bold" style="color:#f9a8d4">31%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+              <div class="h-full rounded-full skill-bar-fill" style="width:31%;background:linear-gradient(90deg,#db2777,#f97316);box-shadow:0 0 8px rgba(219,39,119,.4)"></div>
+            </div>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,.4)">Beginner · Start Week 10</p>
+          </div>
+
+          <!-- Node.js -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold text-white">Node.js / Express</span>
+              <span class="text-xs font-bold" style="color:#4ade80">85%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+              <div class="h-full rounded-full skill-bar-fill" style="width:85%;background:linear-gradient(90deg,#059669,#10b981);box-shadow:0 0 8px rgba(5,150,105,.4)"></div>
+            </div>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,.4)">Strong</p>
+          </div>
+
+          <!-- Docker -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold text-white">Docker / DevOps</span>
+              <span class="text-xs font-bold" style="color:#fbbf24">22%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.07)">
+              <div class="h-full rounded-full skill-bar-fill" style="width:22%;background:linear-gradient(90deg,#d97706,#fbbf24);box-shadow:0 0 8px rgba(217,119,6,.4)"></div>
+            </div>
+            <p class="text-xs mt-1" style="color:rgba(148,163,184,.4)">Beginner · Gap identified 🎯</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer note -->
+      <p class="text-center text-xs pb-6" style="color:rgba(148,163,184,.3)">
+        SkillSync AI · Built for builders · © 2026
+      </p>
+
+    </main>
+  </div>
+</div>
+
+<!-- ── AI MENTOR FAB ─────────────────────────────────── -->
+<button class="ai-fab" id="aiFab" onclick="toggleChat()" aria-label="AI Mentor">
+  🤖
+</button>
+
+<!-- AI POPUP -->
+<div class="ai-popup glass" id="aiPopup"
+     style="border-color:rgba(109,40,217,.35);background:rgba(13,13,28,.92)">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-4 border-b" style="border-color:rgba(255,255,255,.07)">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
+           style="background:linear-gradient(135deg,#6d28d9,#2563eb)">🤖</div>
+      <div>
+        <p class="text-sm font-bold text-white">AI Mentor</p>
+        <p class="text-xs" style="color:#4ade80">● Online</p>
+      </div>
+    </div>
+    <button onclick="toggleChat()" class="text-slate-500 hover:text-slate-300 transition-colors text-lg leading-none">×</button>
+  </div>
+  <!-- Messages -->
+  <div class="p-4 space-y-3">
+    <div class="p-3 rounded-xl text-sm" style="background:rgba(109,40,217,.15);border:1px solid rgba(109,40,217,.2)">
+      <p class="text-white font-medium mb-1">Hey Khyati! 👋</p>
+      <p style="color:rgba(148,163,184,.8);font-size:.8rem">You're 94% through your XP for Level 8. Focus on the 2 pending tasks today and you'll level up! 🚀</p>
+    </div>
+    <div class="p-3 rounded-xl text-sm" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">
+      <p style="color:rgba(148,163,184,.8);font-size:.8rem">💡 Tip: JWT Auth is your weakest area this week. Want me to find a resource?</p>
+    </div>
+  </div>
+  <!-- Input -->
+  <div class="p-3 pt-0">
+    <div class="flex gap-2">
+      <input type="text" placeholder="Ask your AI mentor..."
+             class="flex-1 px-3 py-2 rounded-xl text-sm text-white placeholder-slate-600 outline-none"
+             style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)">
+      <button class="px-3 py-2 rounded-xl text-sm font-semibold"
+              style="background:linear-gradient(135deg,#6d28d9,#2563eb);color:#fff">→</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ────────────────────────────────────────── -->
+<script>
+  // ── Chat toggle
+  function toggleChat() {
+    var popup = document.getElementById('aiPopup');
+    popup.classList.toggle('open');
+  }
+
+  // ── Chart.js: Weekly Progress
+  (function() {
+    var ctx = document.getElementById('progressChart').getContext('2d');
+
+    var grad = ctx.createLinearGradient(0, 0, 0, 180);
+    grad.addColorStop(0,   'rgba(109,40,217,.5)');
+    grad.addColorStop(1,   'rgba(109,40,217,.0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [{
+          label: 'XP Earned',
+          data: [180, 320, 240, 410, 290, 480, 320],
+          borderColor: '#a78bfa',
+          backgroundColor: grad,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.45,
+          pointBackgroundColor: '#6d28d9',
+          pointBorderColor: '#a78bfa',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(13,13,28,.95)',
+            borderColor: 'rgba(109,40,217,.4)',
+            borderWidth: 1,
+            titleColor: '#c4b5fd',
+            bodyColor: '#94a3b8',
+            padding: 10,
+            callbacks: {
+              label: function(ctx) { return ' ' + ctx.parsed.y + ' XP'; }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,.05)', drawBorder: false },
+            ticks: { color: 'rgba(148,163,184,.5)', font: { family: 'DM Sans', size: 11 } }
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,.05)', drawBorder: false },
+            ticks: { color: 'rgba(148,163,184,.5)', font: { family: 'DM Sans', size: 11 }, stepSize: 100 },
+            min: 0
+          }
+        }
+      }
+    });
+  })();
+
+  // ── Real checkbox toggle
+  document.querySelectorAll('.task-check').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      var label = this.nextElementSibling;
+      var box = label.querySelector('.task-box');
+      var text = label.querySelector('.task-text');
+      if (this.checked) {
+        box.style.background = 'linear-gradient(135deg,#6d28d9,#2563eb)';
+        box.style.borderColor = 'transparent';
+        box.style.color = '#fff';
+        box.style.fontSize = '.65rem';
+        box.textContent = '✓';
+        text.style.textDecoration = 'line-through';
+        text.style.opacity = '.4';
+      } else {
+        box.style.background = '';
+        box.style.borderColor = '';
+        box.style.color = '';
+        box.textContent = '';
+        text.style.textDecoration = '';
+        text.style.opacity = '';
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
