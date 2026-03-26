@@ -1,178 +1,614 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSync AI | Leaderboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-dark: #05070a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --neon-blue: #00d2ff;
-            --neon-pink: #ff00cc;
-            --text-main: #ffffff;
-            --text-dim: #a0a0a0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillSync AI — Leaderboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+<style>
+:root{
+  --bg:#080810;--bg2:#0e0e1c;--surface:#13132a;--surface2:#1a1a35;
+  --rim:rgba(255,255,255,.07);--rim2:rgba(255,255,255,.12);
+  --text:#f0f0fc;--sub:#8888aa;--muted:#55556e;
+  --violet:#7c3aed;--violet2:#a78bfa;--blue:#3b82f6;--cyan:#06b6d4;
+  --gold:#f59e0b;--green:#10b981;--pink:#ec4899;
+  --sidebar:220px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:8px}
 
-        /* Title with your Video's Gradient Effect */
-        .title {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            text-align: center;
-        }
+/* BG */
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-base{position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 15% 25%,rgba(109,40,217,.28) 0%,transparent 65%),radial-gradient(ellipse 60% 45% at 85% 75%,rgba(59,130,246,.22) 0%,transparent 60%),var(--bg);animation:bgPulse 18s ease-in-out infinite alternate}
+@keyframes bgPulse{0%{opacity:1}50%{opacity:.85;filter:brightness(1.08) hue-rotate(12deg)}100%{opacity:1}}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.28}
+.bl1{width:550px;height:550px;background:radial-gradient(circle,#6d28d9,transparent 70%);top:-160px;left:-120px;animation:bm1 24s ease-in-out infinite}
+.bl2{width:450px;height:450px;background:radial-gradient(circle,#1d4ed8,transparent 70%);bottom:-80px;right:-100px;animation:bm2 30s ease-in-out infinite}
+.bl3{width:300px;height:300px;background:radial-gradient(circle,#db2777,transparent 70%);top:45%;left:55%;animation:bm3 20s ease-in-out infinite;opacity:.18}
+@keyframes bm1{0%,100%{transform:translate(0,0)}40%{transform:translate(50px,-35px) scale(1.07)}75%{transform:translate(-25px,45px) scale(.94)}}
+@keyframes bm2{0%,100%{transform:translate(0,0)}45%{transform:translate(-55px,35px) scale(1.05)}80%{transform:translate(35px,-50px) scale(.97)}}
+@keyframes bm3{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,25px) scale(1.08)}}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.014) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.014) 1px,transparent 1px);background-size:56px 56px}
 
-        .gradient-text {
-            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-style: italic;
-        }
+/* LAYOUT */
+.app{display:flex;min-height:100vh;position:relative;z-index:1}
 
-        .subtitle {
-            color: var(--text-dim);
-            margin-bottom: 40px;
-            font-size: 1.1rem;
-        }
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:60;display:flex;flex-direction:column;padding:20px 12px 24px;background:rgba(8,8,16,.9);border-right:1px solid var(--rim);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);transition:transform .3s}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:6px 8px 20px;border-bottom:1px solid var(--rim);margin-bottom:20px}
+.logo-mark{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:900;font-size:1rem;color:#fff;background:linear-gradient(135deg,var(--violet),var(--blue));box-shadow:0 0 20px rgba(124,58,237,.45);flex-shrink:0}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:-.02em;background:linear-gradient(135deg,var(--violet2),#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-label{font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:0 10px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:.85rem;font-weight:500;color:var(--sub);text-decoration:none;cursor:pointer;transition:all .18s;margin-bottom:2px;border:1px solid transparent}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7;transition:opacity .18s}
+.nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.nav-item:hover svg{opacity:1}
+.nav-item.active{background:linear-gradient(135deg,rgba(124,58,237,.22),rgba(59,130,246,.12));border-color:rgba(124,58,237,.35);color:var(--violet2);box-shadow:0 0 16px rgba(124,58,237,.18)}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;background:var(--violet);color:#fff;padding:0 5px}
+.sidebar-user{margin-top:auto;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--rim);display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s}
+.sidebar-user:hover{background:rgba(255,255,255,.07);border-color:rgba(124,58,237,.3)}
 
-        /* Glassmorphism Table Card */
-        .leaderboard-container {
-            width: 100%;
-            max-width: 800px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:50;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(8,8,16,.82);border-bottom:1px solid var(--rim);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.breadcrumb{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--sub)}
+.breadcrumb span{color:var(--text);font-weight:600}
 
-        th {
-            text-align: left;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+/* CARD */
+.card{background:rgba(255,255,255,.035);border:1px solid var(--rim);border-radius:16px;position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s,transform .28s cubic-bezier(.16,1,.3,1)}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent)}
+.card:hover{border-color:rgba(167,139,250,.25);box-shadow:0 16px 48px rgba(0,0,0,.4),0 0 32px rgba(124,58,237,.12)}
+.card-lift:hover{transform:translateY(-3px)}
 
-        td {
-            padding: 20px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
+/* BUTTON */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;border:none;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;box-shadow:0 0 20px rgba(124,58,237,.35)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 32px rgba(124,58,237,.55),0 6px 20px rgba(0,0,0,.25)}
+.btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--rim);color:var(--sub)}
+.btn-ghost:hover{background:rgba(255,255,255,.09);border-color:rgba(167,139,250,.3);color:var(--text)}
+.btn-ghost.active{background:rgba(124,58,237,.18);border-color:rgba(124,58,237,.4);color:var(--violet2);box-shadow:0 0 14px rgba(124,58,237,.2)}
 
-        .rank-cell {
-            font-weight: 800;
-            font-size: 1.2rem;
-            width: 60px;
-        }
+/* PILL */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.03em;border:1px solid}
+.pill-v{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.3);color:var(--violet2)}
+.pill-g{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3);color:#fbbf24}
+.pill-gr{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:#4ade80}
+.pill-b{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.28);color:#93c5fd}
 
-        /* Top 3 Highlighting */
-        .rank-1 { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-        .rank-2 { color: #C0C0C0; }
-        .rank-3 { color: #CD7F32; }
+/* AVATAR */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0}
+.ring-gold{padding:3px;border-radius:50%;display:inline-flex;background:conic-gradient(from 0deg,#fbbf24,#f59e0b,#fde68a,#f59e0b,#fbbf24);animation:spin 5s linear infinite}
+.ring-silver{padding:3px;border-radius:50%;display:inline-flex;background:conic-gradient(from 0deg,#94a3b8,#e2e8f0,#94a3b8,#e2e8f0);animation:spin 7s linear infinite}
+.ring-bronze{padding:3px;border-radius:50%;display:inline-flex;background:conic-gradient(from 0deg,#b45309,#d97706,#b45309,#d97706);animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+/* RANK NUMBER */
+.rn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;flex-shrink:0}
+.rn-1{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#431a01;box-shadow:0 0 14px rgba(251,191,36,.4)}
+.rn-2{background:linear-gradient(135deg,#94a3b8,#e2e8f0);color:#1e293b;box-shadow:0 0 12px rgba(148,163,184,.35)}
+.rn-3{background:linear-gradient(135deg,#b45309,#d97706);color:#1c0a00;box-shadow:0 0 12px rgba(180,83,9,.4)}
+.rn-n{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--sub)}
 
-        .user-profile img {
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
+/* TABLE */
+.lb-table{width:100%;border-collapse:collapse}
+.lb-thead th{padding:10px 16px;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;border-bottom:1px solid var(--rim);background:rgba(255,255,255,.02)}
+.lb-thead th:first-child{padding-left:20px}
+.lb-thead th:last-child{padding-right:20px}
+.lb-row td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.lb-row td:first-child{padding-left:20px}
+.lb-row td:last-child{padding-right:20px}
+.lb-row:last-child td{border-bottom:none}
+.lb-row{transition:background .18s}
+.lb-row:hover td{background:rgba(124,58,237,.08)}
+.lb-row.me td{background:rgba(124,58,237,.13)!important}
+.lb-row.me td:first-child{border-left:3px solid var(--violet2);padding-left:17px}
+.lb-row.me:hover td{background:rgba(124,58,237,.18)!important}
 
-        .username {
-            font-weight: 600;
-            font-size: 1.05rem;
-        }
+/* PODIUM */
+.pod{border-radius:20px;display:flex;flex-direction:column;align-items:center;padding:28px 24px 24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.16,1,.3,1);cursor:default;text-align:center}
+.pod::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)}
+.pod:hover{transform:translateY(-8px) scale(1.02)}
+.pod-1{background:linear-gradient(160deg,rgba(251,191,36,.16),rgba(245,158,11,.08),rgba(109,40,217,.1));border:1px solid rgba(251,191,36,.3)}
+.pod-2{background:linear-gradient(160deg,rgba(148,163,184,.1),rgba(100,116,139,.05));border:1px solid rgba(148,163,184,.2)}
+.pod-3{background:linear-gradient(160deg,rgba(180,83,9,.13),rgba(120,53,6,.06));border:1px solid rgba(180,83,9,.28)}
+.pod-1:hover{box-shadow:0 28px 70px rgba(0,0,0,.5),0 0 50px rgba(251,191,36,.22)}
+.pod-2:hover{box-shadow:0 24px 56px rgba(0,0,0,.4),0 0 36px rgba(148,163,184,.14)}
+.pod-3:hover{box-shadow:0 24px 56px rgba(0,0,0,.4),0 0 36px rgba(180,83,9,.2)}
+.crown{display:block;animation:crownFloat 3.5s ease-in-out infinite}
+@keyframes crownFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 
-        .points-cell {
-            text-align: right;
-            font-family: monospace;
-            font-size: 1.2rem;
-            background: linear-gradient(to right, #fff, var(--neon-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-        }
+/* STAT BLOCK */
+.stat-block{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 18px;text-align:center;min-width:82px;transition:all .2s}
+.stat-block:hover{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.3)}
 
-        /* Glowing Button Effect like "Build My Roadmap" */
-        .back-btn {
-            margin-top: 30px;
-            padding: 12px 30px;
-            border-radius: 30px;
-            border: none;
-            background: linear-gradient(90deg, var(--neon-blue), #0082ff);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
-            transition: 0.3s;
-        }
+/* XP BAR */
+.xpbar-bg{background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;height:7px}
+.xpbar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),var(--blue),var(--cyan));box-shadow:0 0 10px rgba(124,58,237,.5);position:relative;overflow:hidden}
+.xpbar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:shimmer 2.4s ease-in-out infinite;transform:translateX(-100%)}
+@keyframes shimmer{to{transform:translateX(300%)}}
 
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.6);
-        }
-    </style>
+/* GLOW PULSES */
+.pulse-v{animation:pulseV 3.5s ease-in-out infinite}
+@keyframes pulseV{0%,100%{box-shadow:0 0 24px rgba(124,58,237,.28)}50%{box-shadow:0 0 48px rgba(124,58,237,.5),0 0 80px rgba(124,58,237,.18)}}
+.pulse-g{animation:pulseG 4s ease-in-out infinite}
+@keyframes pulseG{0%,100%{box-shadow:0 0 18px rgba(16,185,129,.2)}50%{box-shadow:0 0 36px rgba(16,185,129,.4)}}
+
+/* SHIMMER TEXT */
+.shim-text{background:linear-gradient(90deg,var(--violet2),#93c5fd,var(--violet2));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:textFlow 3s linear infinite}
+@keyframes textFlow{to{background-position:-200% center}}
+
+/* LIVE DOT */
+.live-dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.7);animation:livePulse 2s ease-in-out infinite;display:inline-block}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ANIMATIONS */
+.fade-in{opacity:0;animation:fadeIn .6s ease forwards}
+.slide-up{opacity:0;transform:translateY(20px);animation:slideUp .65s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fadeIn{to{opacity:1}}
+@keyframes slideUp{to{opacity:1;transform:translateY(0)}}
+.d1{animation-delay:.04s}.d2{animation-delay:.1s}.d3{animation-delay:.16s}
+.d4{animation-delay:.22s}.d5{animation-delay:.28s}.d6{animation-delay:.34s}
+.d7{animation-delay:.40s}
+
+/* SEARCH */
+.search-wrap{position:relative;display:inline-block}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted);pointer-events:none}
+.search-inp{background:rgba(255,255,255,.05);border:1px solid var(--rim);border-radius:10px;padding:9px 14px 9px 38px;color:var(--text);font-family:inherit;font-size:.83rem;outline:none;transition:all .22s;width:220px}
+.search-inp::placeholder{color:var(--muted)}
+.search-inp:focus{border-color:rgba(124,58,237,.5);background:rgba(124,58,237,.08);box-shadow:0 0 0 3px rgba(124,58,237,.12);width:256px}
+.sort-sel{background:rgba(255,255,255,.05);border:1px solid var(--rim);border-radius:10px;padding:9px 14px;color:var(--sub);font-family:inherit;font-size:.82rem;outline:none;cursor:pointer;transition:border-color .2s;min-width:130px}
+.sort-sel:focus{border-color:rgba(124,58,237,.4);color:var(--text)}
+
+/* NOTIF DOT */
+.notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px rgba(236,72,153,.7)}
+
+/* TROPHY */
+.trophy-anim{animation:trophyFloat 4s ease-in-out infinite}
+@keyframes trophyFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(3deg)}}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  :root{--sidebar:64px}
+  .logo-text,.sidebar-user .uname,.nav-item span,.nav-label,.nav-badge{display:none}
+  .sidebar-logo{padding:8px 4px 16px;justify-content:center}
+  .nav-item{justify-content:center;padding:12px 8px}
+  .sidebar-user{justify-content:center;padding:10px}
+}
+@media(max-width:768px){
+  :root{--sidebar:0px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .mobnav{display:flex!important}
+  .lb-col-st,.lb-col-lv{display:none}
+  .pod-row{flex-direction:column!important;align-items:center!important}
+  .pod-row>div{width:100%!important;max-width:280px!important}
+  .content-area{padding:16px!important;padding-bottom:90px!important}
+  .personal-grid{grid-template-columns:1fr 1fr!important}
+  .ins-grid{grid-template-columns:1fr!important}
+  .stats-row{grid-template-columns:1fr 1fr!important}
+  .topbar{padding:0 16px}
+  .topbar-nav-links{display:none}
+}
+.mobnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:70;background:rgba(8,8,16,.96);border-top:1px solid var(--rim);backdrop-filter:blur(20px);padding:10px 8px;justify-content:space-around;align-items:center}
+.mobnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.6rem;font-weight:600;color:var(--muted);cursor:pointer;transition:color .18s;padding:4px 12px;border-radius:10px}
+.mobnav-item svg{width:20px;height:20px}
+.mobnav-item.active{color:var(--violet2)}
+</style>
 </head>
 <body>
 
-    <div class="title">Top <span class="gradient-text">Talent.</span></div>
-    <div class="subtitle">SkillSync AI community's top performers this week.</div>
+<!-- BG -->
+<div class="bg-layer">
+  <div class="bg-base"></div>
+  <div class="blob bl1"></div>
+  <div class="blob bl2"></div>
+  <div class="blob bl3"></div>
+</div>
+<div class="grid-bg"></div>
 
-    <div class="leaderboard-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Developer</th>
-                    <th style="text-align: right;">Experience XP</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in players %}
-                <tr>
-                    <td class="rank-cell {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% endif %}">
-                        {{ forloop.counter|stringformat:"02d" }}
-                    </td>
-                    <td>
-                        <div class="user-profile">
-                            <img src="https://ui-avatars.com/api/?name={{ player.user.username }}&background=random&color=fff" alt="avatar">
-                            <span class="username">{{ player.user.username }}</span>
-                        </div>
-                    </td>
-                    <td class="points-cell">{{ player.points }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="app">
+
+  <!-- ══ SIDEBAR ════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-text">SkillSync AI</span>
     </div>
 
-    <button class="back-btn">Go to Dashboard</button>
+    <div class="nav-label">Main</div>
+    <a href="#" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+      <span>Leaderboard</span>
+      <div class="nav-badge">🏆</div>
+    </a>
+    <a href="#" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>
+      <span>Roadmap</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span>Progress</span>
+    </a>
 
+    <div class="nav-label" style="margin-top:20px">Account</div>
+    <a href="#" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      <span>Profile</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Settings</span>
+    </a>
+
+    <div class="sidebar-user">
+      <div class="av" style="width:34px;height:34px;font-size:.85rem;background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div>
+      <div style="min-width:0;flex:1">
+        <div class="uname" style="font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Khyati S.</div>
+        <div class="uname" style="font-size:.68rem;color:var(--muted)">Level 7 · 2,840 XP</div>
+      </div>
+      <svg class="uname" style="width:14px;height:14px;color:var(--muted);flex-shrink:0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ════════════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="breadcrumb">
+        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Home &nbsp;/&nbsp; <span>Leaderboard</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.28);font-size:.78rem;font-weight:700;color:#fbbf24">🔥 12-day streak</div>
+        <button class="btn btn-ghost" style="padding:8px;position:relative;border-radius:10px">
+          <svg style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="notif-dot"></span>
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--rim);cursor:pointer">
+          <div class="av" style="width:28px;height:28px;font-size:.75rem;background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div>
+          <span style="font-size:.82rem;font-weight:600;color:var(--text)">Khyati</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <div class="content-area" style="padding:28px 32px 80px;max-width:1100px;width:100%;margin:0 auto">
+
+      <!-- HERO -->
+      <div class="slide-up d1" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:16px">
+          <span class="trophy-anim" style="font-size:2.6rem;line-height:1">🏆</span>
+          <div>
+            <h1 style="font-family:'Syne',sans-serif;font-weight:900;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.04em;line-height:1.05;background:linear-gradient(135deg,#fff,#e2e8f0 40%,var(--violet2) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Global Leaderboard</h1>
+            <p style="font-size:.82rem;color:var(--sub);margin-top:5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Compete &nbsp;·&nbsp; Learn &nbsp;·&nbsp; Rise</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);flex-shrink:0">
+          <span class="live-dot"></span>
+          <span style="font-size:.75rem;font-weight:700;color:#4ade80">Live Rankings</span>
+        </div>
+      </div>
+
+      <!-- AI + MOTIVATION ROW -->
+      <div class="ins-grid slide-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+        <div class="card pulse-g" style="padding:18px 20px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.07));border-color:rgba(16,185,129,.28)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">🤖</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(74,222,128,.65);margin-bottom:3px">AI Insight</div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--text);line-height:1.4">Growing faster than <span style="color:#4ade80">70% of learners</span> this week 📈</div>
+            </div>
+            <div class="pill pill-gr" style="flex-shrink:0">+28%</div>
+          </div>
+        </div>
+        <div class="card" style="padding:18px 20px;background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(239,68,68,.06));border-color:rgba(245,158,11,.25)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">🎯</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(251,191,36,.6);margin-bottom:3px">Your Challenge</div>
+              <div class="shim-text" style="font-size:.85rem;font-weight:700;line-height:1.4">Complete 2 more tasks to enter Top 5 🔥</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERSONAL CARD -->
+      <div class="card pulse-v slide-up d3" style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(109,40,217,.18),rgba(59,130,246,.1));border-color:rgba(167,139,250,.32)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div class="ring-gold" style="background:conic-gradient(from 0deg,#7c3aed,#a78bfa,#3b82f6,#a78bfa,#7c3aed);animation:spin 4s linear infinite">
+              <div class="av" style="width:52px;height:52px;font-size:1.3rem;background:linear-gradient(135deg,#4c1d95,#1e3a8a)">K</div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text)">Khyati Sharma</h2>
+                <div class="pill pill-g">⭐ Top 10</div>
+              </div>
+              <div style="font-size:.78rem;color:var(--sub)">Backend Dev Track · Joined Jan 2026</div>
+            </div>
+          </div>
+          <div style="text-align:center;padding:12px 20px;border-radius:12px;background:rgba(109,40,217,.15);border:1px solid rgba(109,40,217,.3)">
+            <div style="font-size:.68rem;color:var(--sub);font-weight:600;margin-bottom:2px">AHEAD OF</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.8rem;color:var(--violet2);line-height:1">85%</div>
+            <div style="font-size:.68rem;color:var(--sub)">of learners 🚀</div>
+          </div>
+        </div>
+        <!-- Stats -->
+        <div class="personal-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+          <div class="stat-block">
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;margin-bottom:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">#7</div>
+            <div style="font-size:.68rem;color:var(--sub);font-weight:600">Global Rank</div>
+          </div>
+          <div class="stat-block">
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;margin-bottom:4px;color:var(--violet2)">2,840</div>
+            <div style="font-size:.68rem;color:var(--sub);font-weight:600">XP Points</div>
+          </div>
+          <div class="stat-block">
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;margin-bottom:4px;color:#fbbf24">🔥 12</div>
+            <div style="font-size:.68rem;color:var(--sub);font-weight:600">Day Streak</div>
+          </div>
+          <div class="stat-block">
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;margin-bottom:4px;color:#4ade80">Lv 7</div>
+            <div style="font-size:.68rem;color:var(--sub);font-weight:600">Level</div>
+          </div>
+        </div>
+        <!-- XP bar -->
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+            <span style="font-size:.76rem;color:var(--sub);font-weight:600">Progress to Rank #6</span>
+            <span style="font-size:.76rem;font-weight:700;color:var(--violet2)">2,840 / 3,100 XP</span>
+          </div>
+          <div class="xpbar-bg"><div class="xpbar-fill" style="width:91.6%"></div></div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:5px">260 XP to overtake Léa N. and enter Top 6</div>
+        </div>
+      </div>
+
+      <!-- FILTERS + SEARCH -->
+      <div class="slide-up d4" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+        <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--rim);border-radius:12px;padding:4px">
+          <button class="btn btn-ghost active" style="border:none;border-radius:8px;font-size:.78rem" onclick="setFilter(this)">This Week</button>
+          <button class="btn btn-ghost" style="border:none;border-radius:8px;font-size:.78rem" onclick="setFilter(this)">This Month</button>
+          <button class="btn btn-ghost" style="border:none;border-radius:8px;font-size:.78rem" onclick="setFilter(this)">All Time</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="search-wrap">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-inp" type="text" placeholder="Search users...">
+          </div>
+          <select class="sort-sel">
+            <option>Sort by XP</option>
+            <option>Sort by Streak</option>
+            <option>Sort by Level</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PODIUM -->
+      <div class="slide-up d4" style="margin-bottom:28px">
+        <div style="display:flex;align-items:flex-end;justify-content:center;gap:14px" class="pod-row">
+
+          <!-- 2nd -->
+          <div class="pod pod-2" style="flex:1;max-width:230px;padding-bottom:24px">
+            <div class="pill pill-b" style="margin-bottom:14px;font-size:.62rem">🥈 2nd Place</div>
+            <div class="ring-silver" style="margin-bottom:14px">
+              <div class="av" style="width:60px;height:60px;font-size:1.4rem;background:linear-gradient(135deg,#1e293b,#334155)">A</div>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);margin-bottom:4px">Arjun K.</div>
+            <div style="font-size:.72rem;color:var(--sub);margin-bottom:12px">IIT Bombay · ML Track</div>
+            <div style="display:flex;flex-direction:column;gap:6px;width:100%">
+              <div class="pill pill-v" style="justify-content:center">⚡ 3,640 XP</div>
+              <div class="pill pill-g" style="justify-content:center">🔥 28 day streak</div>
+            </div>
+          </div>
+
+          <!-- 1st -->
+          <div class="pod pod-1" style="flex:1;max-width:260px;margin-bottom:-12px;box-shadow:0 0 50px rgba(251,191,36,.18)">
+            <span class="crown" style="font-size:1.6rem;margin-bottom:4px">👑</span>
+            <div class="pill pill-g" style="margin-bottom:14px;font-size:.62rem">🥇 Champion</div>
+            <div class="ring-gold" style="margin-bottom:14px">
+              <div class="av" style="width:68px;height:68px;font-size:1.6rem;background:linear-gradient(135deg,#78350f,#92400e)">P</div>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:var(--text);margin-bottom:4px">Priya S.</div>
+            <div style="font-size:.72rem;color:var(--sub);margin-bottom:14px">IIT Delhi · Backend Dev</div>
+            <div style="display:flex;flex-direction:column;gap:6px;width:100%">
+              <div class="pill pill-g" style="justify-content:center;padding:5px 14px;font-size:.72rem;background:rgba(251,191,36,.18);border-color:rgba(251,191,36,.4)">⚡ 4,280 XP</div>
+              <div class="pill pill-g" style="justify-content:center;padding:5px 14px;font-size:.72rem">🔥 47 day streak</div>
+            </div>
+          </div>
+
+          <!-- 3rd -->
+          <div class="pod pod-3" style="flex:1;max-width:230px;padding-bottom:24px">
+            <div class="pill" style="margin-bottom:14px;font-size:.62rem;background:rgba(180,83,9,.12);border-color:rgba(180,83,9,.28);color:#fbbf24">🥉 3rd Place</div>
+            <div class="ring-bronze" style="margin-bottom:14px">
+              <div class="av" style="width:60px;height:60px;font-size:1.4rem;background:linear-gradient(135deg,#7c2d12,#9a3412)">S</div>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);margin-bottom:4px">Sofia M.</div>
+            <div style="font-size:.72rem;color:var(--sub);margin-bottom:12px">Self-taught · São Paulo</div>
+            <div style="display:flex;flex-direction:column;gap:6px;width:100%">
+              <div class="pill pill-v" style="justify-content:center">⚡ 3,480 XP</div>
+              <div class="pill pill-g" style="justify-content:center">🔥 22 day streak</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:4px;border-radius:0 0 12px 12px;max-width:700px;margin:0 auto;background:linear-gradient(90deg,transparent,rgba(109,40,217,.4),rgba(59,130,246,.3),transparent)"></div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card slide-up d5" style="overflow:hidden;margin-bottom:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--rim)">
+          <div>
+            <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:.98rem;color:var(--text);margin-bottom:2px">All Rankings</h2>
+            <p style="font-size:.72rem;color:var(--sub)">50,000+ learners competing globally</p>
+          </div>
+          <div class="pill pill-v" style="font-size:.65rem">Updated 2 min ago</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="lb-table">
+            <thead class="lb-thead">
+              <tr>
+                <th style="width:60px">Rank</th>
+                <th>User</th>
+                <th style="width:130px">XP ⚡</th>
+                <th class="lb-col-st" style="width:120px">Streak 🔥</th>
+                <th class="lb-col-lv" style="width:100px">Level 🎯</th>
+                <th style="width:90px;text-align:center">Change</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-1">1</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#78350f,#92400e)">P</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">Priya S. <span class="pill pill-g" style="font-size:.6rem">👑 Champion</span></div><div style="font-size:.72rem;color:var(--sub)">IIT Delhi · Backend Dev</div></div></div></td>
+                <td><span class="pill pill-g" style="font-size:.72rem">⚡ 4,280</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 47 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.9</span></td>
+                <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">― Hold</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-2">2</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">A</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">Arjun K. <span class="pill pill-gr" style="font-size:.6rem">⚡ On Fire</span></div><div style="font-size:.72rem;color:var(--sub)">IIT Bombay · ML Track</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 3,640</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 28 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.8</span></td>
+                <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +1</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-3">3</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#831843,#9d174d)">S</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Sofia M.</div><div style="font-size:.72rem;color:var(--sub)">Self-taught · São Paulo</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 3,480</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 22 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.8</span></td>
+                <td style="text-align:center"><span style="color:var(--sub);font-size:.78rem;font-weight:700">― Hold</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-n">4</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#064e3b,#065f46)">J</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">James L.</div><div style="font-size:.72rem;color:var(--sub)">UC San Diego · Full Stack</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 3,310</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 19 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.8</span></td>
+                <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +2</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-n">5</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#312e81,#4338ca)">Y</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Yusuf T.</div><div style="font-size:.72rem;color:var(--sub)">NUS Singapore · DevOps</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 3,200</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 15 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
+                <td style="text-align:center"><span style="color:var(--sub);font-size:.78rem;font-weight:700">― Hold</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-n">6</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#4a1d96,#5b21b6)">L</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Léa N.</div><div style="font-size:.72rem;color:var(--sub)">Bootcamp Grad · Paris</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 3,050</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 14 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
+                <td style="text-align:center"><span style="color:#fca5a5;font-size:.78rem;font-weight:700">▼ -1</span></td>
+              </tr>
+
+              <!-- YOU ROW -->
+              <tr class="lb-row me">
+                <td><div class="rn rn-n" style="background:rgba(124,58,237,.2);border-color:rgba(124,58,237,.4);color:var(--violet2)">7</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">Khyati S. <span class="pill pill-v" style="font-size:.6rem">You</span><span class="pill pill-gr" style="font-size:.6rem">🔺 +3 week</span></div><div style="font-size:.72rem;color:var(--sub)">IIT BHU · Backend Dev</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem;background:rgba(124,58,237,.22);border-color:rgba(124,58,237,.45)">⚡ 2,840</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 12 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
+                <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +3</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-n">8</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#0c4a6e,#0369a1)">R</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Riya P.</div><div style="font-size:.72rem;color:var(--sub)">BITS Pilani · Data Science</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 2,720</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 10 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-b" style="font-size:.72rem">🎯 Lv.7</span></td>
+                <td style="text-align:center"><span style="color:var(--sub);font-size:.78rem;font-weight:700">― Hold</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-n">9</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#14532d,#15803d)">M</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Marcus W.</div><div style="font-size:.72rem;color:var(--sub)">Self-taught · Berlin</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 2,590</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 8 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-b" style="font-size:.72rem">🎯 Lv.6</span></td>
+                <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +1</span></td>
+              </tr>
+
+              <tr class="lb-row">
+                <td><div class="rn rn-n">10</div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#7c2d12,#9a3412)">A</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Aisha T.</div><div style="font-size:.72rem;color:var(--sub)">NUS · Mobile Dev</div></div></div></td>
+                <td><span class="pill pill-v" style="font-size:.72rem">⚡ 2,440</span></td>
+                <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 6 days</span></td>
+                <td class="lb-col-lv"><span class="pill pill-b" style="font-size:.72rem">🎯 Lv.6</span></td>
+                <td style="text-align:center"><span style="color:#fca5a5;font-size:.78rem;font-weight:700">▼ -2</span></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:18px 20px;border-top:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.76rem;color:var(--sub)">Showing 10 of 50,000+ learners</span>
+          <button class="btn btn-primary" style="font-size:.78rem;padding:8px 18px">Load more →</button>
+        </div>
+      </div>
+
+      <!-- BOTTOM STATS -->
+      <div class="stats-row slide-up d7" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div class="card card-lift" style="padding:18px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,var(--violet2),#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent">50K+</div>
+          <div style="font-size:.72rem;color:var(--sub);font-weight:600">Active Learners</div>
+        </div>
+        <div class="card card-lift" style="padding:18px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">2.4M</div>
+          <div style="font-size:.72rem;color:var(--sub);font-weight:600">Tasks Done</div>
+        </div>
+        <div class="card card-lift" style="padding:18px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#4ade80,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">94%</div>
+          <div style="font-size:.72rem;color:var(--sub);font-weight:600">Placement Rate</div>
+        </div>
+        <div class="card card-lift" style="padding:18px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#f9a8d4,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent">4.9★</div>
+          <div style="font-size:.72rem;color:var(--sub);font-weight:600">Avg. Rating</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<nav class="mobnav">
+  <div class="mobnav-item"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Home</div>
+  <div class="mobnav-item active"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>Ranks</div>
+  <div class="mobnav-item"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>Roadmap</div>
+  <div class="mobnav-item"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Profile</div>
+</nav>
+
+<script>
+function setFilter(btn){
+  btn.closest('div').querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
 </body>
 </html>
