@@ -24,6 +24,6 @@ def register_view(request):
         
     return render(request, "accounts/register.html")
 
-# 3. Forget Password View
-def forget_password_view(request):
-    return render(request, "accounts/forget_password.html")
+# 3. Forgot Password View
+def forgot_password_view(request):
+    return render(request, "accounts/forgot_password.html")
