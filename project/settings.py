@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "home.apps.HomeConfig",
     "dashboard.apps.DashboardConfig",
     "leaderboard.apps.LeaderboardConfig",
+    "accounts.apps.AccountsConfig",
 ]
 
 MIDDLEWARE = [
