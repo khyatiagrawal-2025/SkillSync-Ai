@@ -227,14 +227,14 @@ body{
         <label class="label" for="first_name">First Name</label>
         <div class="inp-wrap">
           <svg class="inp-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          <input class="inp" id="first_name" name="first_name" type="text" placeholder="Khyati" autocomplete="given-name">
+          <input class="inp" id="first_name" name="first_name" type="text" placeholder="User_name" autocomplete="given-name">
         </div>
       </div>
       <div class="field f1">
         <label class="label" for="last_name">Last Name</label>
         <div class="inp-wrap">
           <svg class="inp-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          <input class="inp" id="last_name" name="last_name" type="text" placeholder="Sharma" autocomplete="family-name">
+          <input class="inp" id="last_name" name="last_name" type="text" placeholder="User_surname" autocomplete="family-name">
         </div>
       </div>
     </div>
@@ -244,7 +244,7 @@ body{
       <label class="label" for="username">Username</label>
       <div class="inp-wrap">
         <svg class="inp-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <input class="inp" id="username" name="username" type="text" placeholder="khyati_dev" autocomplete="username" required oninput="updateSteps()">
+        <input class="inp" id="username" name="username" type="text" placeholder="Unknown_dev@User" autocomplete="username" required oninput="updateSteps()">
       </div>
       <div class="fhint e" id="u-hint"></div>
     </div>
@@ -254,7 +254,7 @@ body{
       <label class="label" for="email">Email Address</label>
       <div class="inp-wrap">
         <svg class="inp-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-        <input class="inp" id="email" name="email" type="email" placeholder="khyati@example.com"
+        <input class="inp" id="email" name="email" type="email" placeholder="user@example.com"
                value="{{ user.email|default:'' }}" autocomplete="email" required oninput="updateSteps()">
       </div>
       <div class="fhint e" id="e-hint"></div>
