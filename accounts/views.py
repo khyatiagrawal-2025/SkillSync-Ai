@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.views import LoginView as AuthLoginView
 from .forms import CustomUserForm
 from django.contrib.auth import authenticate, login
+from django.contrib.auth import logout
 from django.contrib import messages
 from django.urls import reverse_lazy
 
@@ -35,3 +36,8 @@ def register_view(request):
 
 def forgot_password_view(request):
     return render(request, 'forgot_password.html')
+
+def LogoutView(request):
+    logout(request)
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('home')  # Redirect to a page after logout, e.g., the home page

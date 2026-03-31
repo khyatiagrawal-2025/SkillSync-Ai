@@ -1,9 +1,13 @@
 from django.shortcuts import render
-
+from django.contrib.auth.decorators import login_required
 from .models import UserProfile
-from django.db.models import F
 
-def leaderboard(request):
+
+
+@login_required
+def leaderboard_view(request):
+    
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
     # Sabhi users ko XP ke hisaab se rank karo
     all_users = UserProfile.objects.all().order_by('-xp_points')
     
