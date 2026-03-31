@@ -125,6 +125,7 @@ nav {
   background:transparent;
   color:var(--text); font-family:inherit; font-size:.86rem; font-weight:600;
   cursor:pointer; transition:all .25s;
+  text-decoration: none;
 }
 .btn-nav-ghost:hover { background:var(--rim); border-color:rgba(167,139,250,.3); }
 .btn-nav-cta {
@@ -700,7 +701,7 @@ footer {
     <a class="nav-link">Blog</a>
   </div>
   <div class="nav-actions">
-    <a href="" class="btn-nav-ghost">Log in</button>
+    <a href="{% url 'login' %}" class="btn-nav-ghost">Log in</a>
     <button class="btn-nav-cta">Start for free →</button>
   </div>
 </nav>

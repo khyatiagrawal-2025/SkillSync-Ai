@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # SkillSync-AI Accounts Routes
-    path("login/", views.login_view, name="login"),
+    path("login/", views.login_view.as_view(), name="login"),
     path("register/", views.register_view, name="register"),
     path("forgot-password/", views.forgot_password_view, name="forgot_password"),
 ]
