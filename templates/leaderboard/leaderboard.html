@@ -1,146 +1,409 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSync AI | Leaderboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-dark: #05070a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --neon-blue: #00d2ff;
-            --neon-pink: #ff00cc;
-            --text-main: #ffffff;
-            --text-dim: #a0a0a0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillSync AI | Leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+       TOKENS
+    ═══════════════════════════════════════════ */
+    :root {
+      --bg:       #05070a;
+      --surface:  #0c0e14;
+      --card-bg:  rgba(255,255,255,0.04);
+      --rim:      rgba(255,255,255,0.08);
+      --text:     #f1f5f9;
+      --sub:      #64748b;
+      --muted:    #3d4a5a;
+      --violet1:  #7c3aed;
+      --violet2:  #a78bfa;
+      --blue1:    #3b82f6;
+      --green1:   #10b981;
+      --amber1:   #f59e0b;
+      --pink1:    #ec4899;
+      --sidebar-w: 230px;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Title with your Video's Gradient Effect */
-        .title {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            text-align: center;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-        .gradient-text {
-            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-style: italic;
-        }
+    /* ═══════════════════════════════════════════
+       BACKGROUND LAYERS
+    ═══════════════════════════════════════════ */
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+    .bg-base {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(109,40,217,.18), transparent 70%);
+    }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: .35;
+    }
+    .bl1 { width: 500px; height: 500px; top: -100px; left: -100px; background: radial-gradient(circle, rgba(109,40,217,.5), transparent 70%); }
+    .bl2 { width: 400px; height: 400px; top: 40%; right: -80px; background: radial-gradient(circle, rgba(59,130,246,.4), transparent 70%); }
+    .bl3 { width: 350px; height: 350px; bottom: -60px; left: 30%; background: radial-gradient(circle, rgba(16,185,129,.3), transparent 70%); }
 
-        .subtitle {
-            color: var(--text-dim);
-            margin-bottom: 40px;
-            font-size: 1.1rem;
-        }
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
 
-        /* Glassmorphism Table Card */
-        .leaderboard-container {
-            width: 100%;
-            max-width: 800px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
+    /* ═══════════════════════════════════════════
+       APP LAYOUT
+    ═══════════════════════════════════════════ */
+    .app {
+      position: relative; z-index: 1;
+      display: flex; min-height: 100vh;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+    /* ═══════════════════════════════════════════
+       SIDEBAR
+    ═══════════════════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: rgba(10,12,18,.85);
+      border-right: 1px solid var(--rim);
+      backdrop-filter: blur(20px);
+      display: flex; flex-direction: column;
+      padding: 20px 12px;
+      position: sticky; top: 0; height: 100vh;
+      overflow-y: auto;
+    }
 
-        th {
-            text-align: left;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 4px 8px 20px;
+      border-bottom: 1px solid var(--rim);
+      margin-bottom: 16px;
+    }
+    .logo-mark {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--violet1), var(--blue1));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 900;
+      font-size: 1rem; color: #fff; text-transform: uppercase;
+    }
+    .logo-text {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: .88rem; color: var(--text); letter-spacing: -.02em;
+    }
 
-        td {
-            padding: 20px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
+    .nav-label {
+      font-size: .62rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--muted);
+      padding: 0 8px; margin-bottom: 6px;
+    }
 
-        .rank-cell {
-            font-weight: 800;
-            font-size: 1.2rem;
-            width: 60px;
-        }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 10px;
+      font-size: .82rem; font-weight: 600; color: var(--sub);
+      text-decoration: none; cursor: pointer;
+      transition: all .2s; position: relative;
+      margin-bottom: 2px;
+    }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: var(--text); }
+    .nav-item.active {
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      color: var(--violet2);
+    }
+    .nav-badge {
+      margin-left: auto; font-size: .7rem;
+    }
 
-        /* Top 3 Highlighting */
-        .rank-1 { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-        .rank-2 { color: #C0C0C0; }
-        .rank-3 { color: #CD7F32; }
+    .sidebar-user {
+      margin-top: auto; padding: 12px 8px 4px;
+      border-top: 1px solid var(--rim);
+      display: flex; align-items: center; gap: 10px;
+    }
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    /* ═══════════════════════════════════════════
+       MAIN
+    ═══════════════════════════════════════════ */
+    .main {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+    }
 
-        .user-profile img {
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
+    /* ═══════════════════════════════════════════
+       TOPBAR
+    ═══════════════════════════════════════════ */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 28px;
+      background: rgba(5,7,10,.8); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--rim);
+    }
+    .breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .76rem; color: var(--sub); font-weight: 500;
+    }
+    .breadcrumb svg { width: 14px; height: 14px; }
+    .breadcrumb span { color: var(--text); font-weight: 600; }
+    .notif-dot {
+      position: absolute; top: 6px; right: 6px;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #ef4444; border: 1.5px solid var(--bg);
+    }
 
-        .username {
-            font-weight: 600;
-            font-size: 1.05rem;
-        }
+    /* ═══════════════════════════════════════════
+       AVATAR
+    ═══════════════════════════════════════════ */
+    .av {
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-weight: 800; color: #fff;
+      flex-shrink: 0; font-family: 'Syne', sans-serif;
+    }
 
-        .points-cell {
-            text-align: right;
-            font-family: monospace;
-            font-size: 1.2rem;
-            background: linear-gradient(to right, #fff, var(--neon-blue));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-        }
+    /* ═══════════════════════════════════════════
+       CARDS
+    ═══════════════════════════════════════════ */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--rim);
+      border-radius: 16px;
+    }
+    .card-lift { transition: transform .2s, box-shadow .2s; }
+    .card-lift:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.4); }
 
-        /* Glowing Button Effect like "Build My Roadmap" */
-        .back-btn {
-            margin-top: 30px;
-            padding: 12px 30px;
-            border-radius: 30px;
-            border: none;
-            background: linear-gradient(90deg, var(--neon-blue), #0082ff);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
-            transition: 0.3s;
-        }
+    /* ═══════════════════════════════════════════
+       PILLS / BADGES
+    ═══════════════════════════════════════════ */
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700;
+      border: 1px solid var(--rim); color: var(--sub);
+    }
+    .pill-g  { background: rgba(16,185,129,.12);  border-color: rgba(16,185,129,.3);  color: #4ade80; }
+    .pill-v  { background: rgba(124,58,237,.14);  border-color: rgba(124,58,237,.35); color: var(--violet2); }
+    .pill-b  { background: rgba(59,130,246,.12);  border-color: rgba(59,130,246,.3);  color: #93c5fd; }
+    .pill-gr { background: rgba(16,185,129,.1);   border-color: rgba(16,185,129,.25); color: #34d399; }
 
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.6);
-        }
-    </style>
+    /* ═══════════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════════ */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 10px; font-size: .82rem; font-weight: 600;
+      border: 1px solid var(--rim); cursor: pointer; transition: all .2s;
+      background: transparent; color: var(--sub); font-family: 'Inter', sans-serif;
+    }
+    .btn:hover { color: var(--text); background: rgba(255,255,255,.06); }
+    .btn.active { background: rgba(124,58,237,.18); border-color: rgba(124,58,237,.4); color: var(--violet2); }
+    .btn-ghost { background: transparent; border-color: transparent; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--violet1), var(--blue1));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 0 20px rgba(109,40,217,.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(109,40,217,.5); }
+
+    /* ═══════════════════════════════════════════
+       RINGS (podium avatar rings)
+    ═══════════════════════════════════════════ */
+    .ring-gold, .ring-silver, .ring-bronze {
+      padding: 3px; border-radius: 16px; display: inline-flex;
+    }
+    .ring-gold   { background: conic-gradient(from 0deg, #f59e0b, #fde68a, #f59e0b, #92400e, #f59e0b); animation: spin 4s linear infinite; }
+    .ring-silver { background: conic-gradient(from 0deg, #94a3b8, #e2e8f0, #94a3b8); animation: spin 6s linear infinite; }
+    .ring-bronze { background: conic-gradient(from 0deg, #92400e, #d97706, #92400e); animation: spin 5s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════
+       LIVE DOT
+    ═══════════════════════════════════════════ */
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 0 0 rgba(74,222,128,.6);
+      animation: pulse-green 1.5s infinite;
+    }
+    @keyframes pulse-green {
+      0%   { box-shadow: 0 0 0 0 rgba(74,222,128,.6); }
+      70%  { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+      100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+    }
+
+    /* ═══════════════════════════════════════════
+       PODIUM
+    ═══════════════════════════════════════════ */
+    .pod {
+      display: flex; flex-direction: column; align-items: center;
+      border-radius: 20px; padding: 20px 16px;
+      border: 1px solid var(--rim); background: var(--card-bg);
+      text-align: center;
+    }
+    .pod-1 {
+      background: linear-gradient(160deg, rgba(245,158,11,.1), rgba(109,40,217,.08));
+      border-color: rgba(245,158,11,.25);
+      padding-top: 28px;
+    }
+    .pod-2 { background: linear-gradient(160deg, rgba(148,163,184,.07), transparent); }
+    .pod-3 { background: linear-gradient(160deg, rgba(180,83,9,.08), transparent); }
+
+    .crown { display: block; animation: bounce .8s infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+
+    /* ═══════════════════════════════════════════
+       XP BAR
+    ═══════════════════════════════════════════ */
+    .xpbar-bg {
+      height: 8px; border-radius: 999px;
+      background: rgba(255,255,255,.08); overflow: hidden;
+    }
+    .xpbar-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--violet1), var(--blue1));
+      position: relative;
+    }
+    .xpbar-fill::after {
+      content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; box-shadow: 0 0 8px rgba(124,58,237,.8);
+    }
+
+    /* ═══════════════════════════════════════════
+       STAT BLOCK
+    ═══════════════════════════════════════════ */
+    .stat-block {
+      background: rgba(255,255,255,.04); border: 1px solid var(--rim);
+      border-radius: 12px; padding: 14px; text-align: center;
+    }
+
+    /* ═══════════════════════════════════════════
+       LEADERBOARD TABLE
+    ═══════════════════════════════════════════ */
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-thead th {
+      padding: 12px 16px; text-align: left;
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--muted);
+      border-bottom: 1px solid var(--rim);
+    }
+    .lb-row td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+    .lb-row:last-child td { border-bottom: none; }
+    .lb-row:hover td { background: rgba(255,255,255,.025); }
+    .lb-row.me td { background: rgba(124,58,237,.07); }
+    .lb-row.me:hover td { background: rgba(124,58,237,.1); }
+
+    /* Rank number circles */
+    .rn {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 900; font-size: .9rem;
+      border: 1px solid var(--rim); color: var(--sub);
+    }
+    .rn-1 { background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.35); color: #fbbf24; }
+    .rn-2 { background: rgba(148,163,184,.12); border-color: rgba(148,163,184,.3); color: #cbd5e1; }
+    .rn-3 { background: rgba(180,83,9,.12); border-color: rgba(180,83,9,.3); color: #d97706; }
+    .rn-n { background: rgba(255,255,255,.05); }
+
+    /* ═══════════════════════════════════════════
+       SEARCH + SORT
+    ═══════════════════════════════════════════ */
+    .search-wrap {
+      position: relative; display: flex; align-items: center;
+    }
+    .search-wrap svg {
+      position: absolute; left: 10px; width: 14px; height: 14px; color: var(--muted);
+    }
+    .search-inp {
+      background: rgba(255,255,255,.05); border: 1px solid var(--rim);
+      border-radius: 10px; padding: 8px 12px 8px 32px;
+      font-size: .78rem; color: var(--text); font-family: 'Inter', sans-serif;
+      outline: none; width: 180px;
+    }
+    .search-inp:focus { border-color: rgba(124,58,237,.5); }
+    .search-inp::placeholder { color: var(--muted); }
+
+    .sort-sel {
+      background: rgba(255,255,255,.05); border: 1px solid var(--rim);
+      border-radius: 10px; padding: 8px 12px; font-size: .78rem;
+      color: var(--text); font-family: 'Inter', sans-serif; cursor: pointer; outline: none;
+    }
+
+    /* ═══════════════════════════════════════════
+       SHIMMER TEXT
+    ═══════════════════════════════════════════ */
+    .shim-text {
+      background: linear-gradient(90deg, var(--text) 0%, var(--amber1) 50%, var(--text) 100%);
+      background-size: 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ═══════════════════════════════════════════
+       PULSE BORDERS
+    ═══════════════════════════════════════════ */
+    .pulse-g { animation: pulseG 3s infinite; }
+    @keyframes pulseG {
+      0%, 100% { border-color: rgba(16,185,129,.28); }
+      50%       { border-color: rgba(16,185,129,.55); box-shadow: 0 0 20px rgba(16,185,129,.1); }
+    }
+    .pulse-v { animation: pulseV 3s infinite; }
+    @keyframes pulseV {
+      0%, 100% { border-color: rgba(167,139,250,.32); }
+      50%       { border-color: rgba(167,139,250,.6); box-shadow: 0 0 24px rgba(167,139,250,.12); }
+    }
+
+    /* ═══════════════════════════════════════════
+       SLIDE UP ANIMATIONS
+    ═══════════════════════════════════════════ */
+    .slide-up { animation: slideUp .5s ease both; }
+    .d1 { animation-delay: .05s; } .d2 { animation-delay: .1s; }
+    .d3 { animation-delay: .15s; } .d4 { animation-delay: .2s; }
+    .d5 { animation-delay: .25s; } .d6 { animation-delay: .3s; }
+    .d7 { animation-delay: .35s; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ═══════════════════════════════════════════
+       MOBILE NAV
+    ═══════════════════════════════════════════ */
+    .mobnav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,12,18,.92); backdrop-filter: blur(16px);
+      border-top: 1px solid var(--rim);
+      padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+      justify-content: space-around;
+    }
+    .mobnav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      font-size: .6rem; font-weight: 600; color: var(--sub); cursor: pointer;
+      padding: 4px 12px; border-radius: 10px; transition: .2s;
+    }
+    .mobnav-item svg { width: 20px; height: 20px; }
+    .mobnav-item.active { color: var(--violet2); }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mobnav  { display: flex; }
+      .lb-col-st, .lb-col-lv { display: none; }
+      .pod-row { flex-wrap: wrap; }
+    }
+  </style>
 </head>
 <body>
 
@@ -155,10 +418,10 @@
 
 <div class="app">
 
-  <!-- ══ SIDEBAR ════════════════════════════════════════════ -->
+  <!-- ══ SIDEBAR ═══════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-mark">S</div>
+      <div class="logo-mark">s</div>
       <span class="logo-text">SkillSync AI</span>
     </div>
 
@@ -194,20 +457,20 @@
     <div class="sidebar-user">
       <div class="av" style="width:34px;height:34px;font-size:.85rem;background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div>
       <div style="min-width:0;flex:1">
-        <div class="uname" style="font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Khyati S.</div>
-        <div class="uname" style="font-size:.68rem;color:var(--muted)">Level 7 · 2,840 XP</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Khyati S.</div>
+        <div style="font-size:.68rem;color:var(--muted)">Level 7 · 2,840 XP</div>
       </div>
-      <svg class="uname" style="width:14px;height:14px;color:var(--muted);flex-shrink:0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <svg style="width:14px;height:14px;color:var(--muted);flex-shrink:0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
     </div>
   </aside>
 
-  <!-- ══ MAIN ════════════════════════════════════════════════ -->
+  <!-- ══ MAIN ═══════════════════════════════════════ -->
   <div class="main">
 
     <!-- TOPBAR -->
     <header class="topbar">
       <div class="breadcrumb">
-        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         Home &nbsp;/&nbsp; <span>Leaderboard</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
@@ -229,7 +492,7 @@
       <!-- HERO -->
       <div class="slide-up d1" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:16px">
-          <span class="trophy-anim" style="font-size:2.6rem;line-height:1">🏆</span>
+          <span style="font-size:2.6rem;line-height:1;animation:bounce .8s infinite alternate">🏆</span>
           <div>
             <h1 style="font-family:'Syne',sans-serif;font-weight:900;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.04em;line-height:1.05;background:linear-gradient(135deg,#fff,#e2e8f0 40%,var(--violet2) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Global Leaderboard</h1>
             <p style="font-size:.82rem;color:var(--sub);margin-top:5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Compete &nbsp;·&nbsp; Learn &nbsp;·&nbsp; Rise</p>
@@ -242,7 +505,7 @@
       </div>
 
       <!-- AI + MOTIVATION ROW -->
-      <div class="ins-grid slide-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+      <div class="slide-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
         <div class="card pulse-g" style="padding:18px 20px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.07));border-color:rgba(16,185,129,.28)">
           <div style="display:flex;align-items:center;gap:12px">
             <div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">🤖</div>
@@ -268,12 +531,12 @@
       <div class="card pulse-v slide-up d3" style="margin-bottom:24px;padding:24px;background:linear-gradient(135deg,rgba(109,40,217,.18),rgba(59,130,246,.1));border-color:rgba(167,139,250,.32)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
           <div style="display:flex;align-items:center;gap:14px">
-            <div class="ring-gold" style="background:conic-gradient(from 0deg,#7c3aed,#a78bfa,#3b82f6,#a78bfa,#7c3aed);animation:spin 4s linear infinite">
+            <div class="ring-gold">
               <div class="av" style="width:52px;height:52px;font-size:1.3rem;background:linear-gradient(135deg,#4c1d95,#1e3a8a)">K</div>
             </div>
             <div>
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-                <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text)">Khyati Sharma</h2>
+                <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text)">Khyati S.</h2>
                 <div class="pill pill-g">⭐ Top 10</div>
               </div>
               <div style="font-size:.78rem;color:var(--sub)">Backend Dev Track · Joined Jan 2026</div>
@@ -286,9 +549,9 @@
           </div>
         </div>
         <!-- Stats -->
-        <div class="personal-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
           <div class="stat-block">
-            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;margin-bottom:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">#7</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;margin-bottom:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent">#7</div>
             <div style="font-size:.68rem;color:var(--sub);font-weight:600">Global Rank</div>
           </div>
           <div class="stat-block">
@@ -318,9 +581,9 @@
       <!-- FILTERS + SEARCH -->
       <div class="slide-up d4" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;flex-wrap:wrap">
         <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--rim);border-radius:12px;padding:4px">
-          <button class="btn btn-ghost active" style="border:none;border-radius:8px;font-size:.78rem" onclick="setFilter(this)">This Week</button>
-          <button class="btn btn-ghost" style="border:none;border-radius:8px;font-size:.78rem" onclick="setFilter(this)">This Month</button>
-          <button class="btn btn-ghost" style="border:none;border-radius:8px;font-size:.78rem" onclick="setFilter(this)">All Time</button>
+          <button class="btn active" style="border-radius:8px;font-size:.78rem" onclick="setFilter(this)">This Week</button>
+          <button class="btn" style="border-radius:8px;font-size:.78rem" onclick="setFilter(this)">This Month</button>
+          <button class="btn" style="border-radius:8px;font-size:.78rem" onclick="setFilter(this)">All Time</button>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <div class="search-wrap">
@@ -407,7 +670,6 @@
               </tr>
             </thead>
             <tbody>
-
               <tr class="lb-row">
                 <td><div class="rn rn-1">1</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#78350f,#92400e)">P</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">Priya S. <span class="pill pill-g" style="font-size:.6rem">👑 Champion</span></div><div style="font-size:.72rem;color:var(--sub)">IIT Delhi · Backend Dev</div></div></div></td>
@@ -416,7 +678,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.9</span></td>
                 <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">― Hold</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-2">2</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">A</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">Arjun K. <span class="pill pill-gr" style="font-size:.6rem">⚡ On Fire</span></div><div style="font-size:.72rem;color:var(--sub)">IIT Bombay · ML Track</div></div></div></td>
@@ -425,7 +686,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.8</span></td>
                 <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +1</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-3">3</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#831843,#9d174d)">S</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Sofia M.</div><div style="font-size:.72rem;color:var(--sub)">Self-taught · São Paulo</div></div></div></td>
@@ -434,7 +694,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.8</span></td>
                 <td style="text-align:center"><span style="color:var(--sub);font-size:.78rem;font-weight:700">― Hold</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-n">4</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#064e3b,#065f46)">J</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">James L.</div><div style="font-size:.72rem;color:var(--sub)">UC San Diego · Full Stack</div></div></div></td>
@@ -443,7 +702,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.8</span></td>
                 <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +2</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-n">5</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#312e81,#4338ca)">Y</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Yusuf T.</div><div style="font-size:.72rem;color:var(--sub)">NUS Singapore · DevOps</div></div></div></td>
@@ -452,7 +710,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
                 <td style="text-align:center"><span style="color:var(--sub);font-size:.78rem;font-weight:700">― Hold</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-n">6</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#4a1d96,#5b21b6)">L</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Léa N.</div><div style="font-size:.72rem;color:var(--sub)">Bootcamp Grad · Paris</div></div></div></td>
@@ -461,7 +718,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
                 <td style="text-align:center"><span style="color:#fca5a5;font-size:.78rem;font-weight:700">▼ -1</span></td>
               </tr>
-
               <!-- YOU ROW -->
               <tr class="lb-row me">
                 <td><div class="rn rn-n" style="background:rgba(124,58,237,.2);border-color:rgba(124,58,237,.4);color:var(--violet2)">7</div></td>
@@ -471,7 +727,6 @@
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
                 <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +3</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-n">8</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#0c4a6e,#0369a1)">R</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Riya P.</div><div style="font-size:.72rem;color:var(--sub)">BITS Pilani · Data Science</div></div></div></td>
@@ -480,7 +735,6 @@
                 <td class="lb-col-lv"><span class="pill pill-b" style="font-size:.72rem">🎯 Lv.7</span></td>
                 <td style="text-align:center"><span style="color:var(--sub);font-size:.78rem;font-weight:700">― Hold</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-n">9</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#14532d,#15803d)">M</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Marcus W.</div><div style="font-size:.72rem;color:var(--sub)">Self-taught · Berlin</div></div></div></td>
@@ -489,7 +743,6 @@
                 <td class="lb-col-lv"><span class="pill pill-b" style="font-size:.72rem">🎯 Lv.6</span></td>
                 <td style="text-align:center"><span style="color:#4ade80;font-size:.78rem;font-weight:700">▲ +1</span></td>
               </tr>
-
               <tr class="lb-row">
                 <td><div class="rn rn-n">10</div></td>
                 <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#7c2d12,#9a3412)">A</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text)">Aisha T.</div><div style="font-size:.72rem;color:var(--sub)">NUS · Mobile Dev</div></div></div></td>
@@ -498,7 +751,6 @@
                 <td class="lb-col-lv"><span class="pill pill-b" style="font-size:.72rem">🎯 Lv.6</span></td>
                 <td style="text-align:center"><span style="color:#fca5a5;font-size:.78rem;font-weight:700">▼ -2</span></td>
               </tr>
-
             </tbody>
           </table>
         </div>
@@ -509,21 +761,21 @@
       </div>
 
       <!-- BOTTOM STATS -->
-      <div class="stats-row slide-up d7" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div class="slide-up d7" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
         <div class="card card-lift" style="padding:18px;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,var(--violet2),#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent">50K+</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,var(--violet2),#93c5fd);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent">50K+</div>
           <div style="font-size:.72rem;color:var(--sub);font-weight:600">Active Learners</div>
         </div>
         <div class="card card-lift" style="padding:18px;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">2.4M</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent">2.4M</div>
           <div style="font-size:.72rem;color:var(--sub);font-weight:600">Tasks Done</div>
         </div>
         <div class="card card-lift" style="padding:18px;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#4ade80,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">94%</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#4ade80,#10b981);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent">94%</div>
           <div style="font-size:.72rem;color:var(--sub);font-weight:600">Placement Rate</div>
         </div>
         <div class="card card-lift" style="padding:18px;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#f9a8d4,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent">4.9★</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:4px;background:linear-gradient(135deg,#f9a8d4,#ec4899);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent">4.9★</div>
           <div style="font-size:.72rem;color:var(--sub);font-weight:600">Avg. Rating</div>
         </div>
       </div>
@@ -542,7 +794,7 @@
 
 <script>
 function setFilter(btn){
-  btn.closest('div').querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  btn.closest('div').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 </script>
