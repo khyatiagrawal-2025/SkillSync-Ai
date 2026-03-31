@@ -35,7 +35,7 @@ def register_view(request):
     return render(request, 'accounts/register.html', {'form': form})
 
 def forgot_password_view(request):
-    return render(request, 'forgot_password.html')
+    return render(request, 'accounts/forgot_password.html')
 
 def LogoutView(request):
     logout(request)
