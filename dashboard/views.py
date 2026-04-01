@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from accounts.models import Student
+from django.views.decorators.cache import never_cache
 
 @login_required
+@never_cache
 def dashboard(request):
     # 1. Accounts App se Data: Total Students count
     total_students_count = Student.objects.count()

@@ -215,6 +215,7 @@ nav {
   box-shadow:0 0 40px rgba(123,94,167,.5), 0 12px 32px rgba(0,0,0,.3);
   transition:transform .25s,box-shadow .25s;
   letter-spacing:-.01em;
+  text-decoration: none;
 }
 .btn-hero-primary:hover { transform:translateY(-3px) scale(1.02); box-shadow:0 0 60px rgba(123,94,167,.7),0 20px 40px rgba(0,0,0,.35); }
 .btn-hero-primary::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.18),transparent); opacity:0; transition:opacity .2s; }
@@ -597,6 +598,7 @@ nav {
   cursor:pointer; letter-spacing:-.01em;
   box-shadow:0 0 40px rgba(123,94,167,.5);
   transition:all .25s;
+  text-decoration: none;
 }
 .btn-cta-big:hover { transform:translateY(-3px); box-shadow:0 0 60px rgba(123,94,167,.7),0 16px 40px rgba(0,0,0,.3); }
 .btn-cta-ghost {
@@ -726,7 +728,7 @@ footer {
   </p>
 
   <div class="hero-cta-group">
-    <button class="btn-hero-primary">Build My Roadmap &nbsp;<span class="btn-arrow">→</span></button>
+    <a href="{% url 'login' %}" class="btn-hero-primary">Build My Roadmap &nbsp;<span class="btn-arrow">→</span></a>
     <button class="btn-hero-ghost">⚡ &nbsp;Connect GitHub</button>
   </div>
 
@@ -1096,7 +1098,7 @@ footer {
     <h2>Your career doesn't have to<br><span class="italic-em" style="background:var(--grad-b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">feel like guesswork.</span></h2>
     <p>Join 50,000 students who swapped confusion for clarity — and started building careers on purpose.</p>
     <div class="cta-buttons">
-      <button class="btn-cta-big">Build My Free Roadmap →</button>
+      <a href="{% url 'login' %}" class="btn-cta-big">Build My Free Roadmap →</a>
       <button class="btn-cta-ghost">See it in action first</button>
     </div>
     <div class="cta-note">No credit card · Takes 2 minutes · Cancel anytime</div>
