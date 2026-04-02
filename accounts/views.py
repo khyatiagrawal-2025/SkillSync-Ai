@@ -37,6 +37,9 @@ def register_view(request):
 def forgot_password_view(request):
     return render(request, 'accounts/forgot_password.html')
 
+def reset_password_view(request):
+    return render(request, 'accounts/reset_password.html')
+
 def LogoutView(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
