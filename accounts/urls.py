@@ -7,6 +7,7 @@ urlpatterns = [
     # 🔐 Auth Routes
     path("login/", views.login_view.as_view(), name="login"),
     path("register/", views.register_view, name="register"),
+
     path("logout/", views.LogoutView, name="logout"),
 
     # 🔑 Password Reset Flow
@@ -25,5 +26,3 @@ urlpatterns = [
         name="password_reset_complete"),
     
 ]
-
-

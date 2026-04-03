@@ -92,6 +92,9 @@ def resend_reset_email(request):
     return redirect('password_reset_done')
 
 
+def reset_password_view(request):
+    return render(request, 'accounts/reset_password.html')
+
 def LogoutView(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
