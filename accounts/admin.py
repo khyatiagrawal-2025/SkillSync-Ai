@@ -1,7 +1,7 @@
-from django.contrib import admin
+
 
 from django.contrib import admin
-from .models import Student, Attendance # Apne models import karein
+from .models import Student, Attendance, PasswordResetToken # Apne models import karein
 
 # Student model ko register karein
 @admin.register(Student)
@@ -14,3 +14,11 @@ class StudentAdmin(admin.ModelAdmin):
 class AttendanceAdmin(admin.ModelAdmin):
     list_display = ('student', 'date', ) # Panel mein ye columns dikhenge
     search_fields = ('student__name',) # Search bar enable ho jayega
+    
+    
+    
+ # PasswordResetToken model ko register karein
+@admin.register(PasswordResetToken)
+class PasswordResetTokenAdmin(admin.ModelAdmin):
+    list_display = ('user', 'token')
+    search_fields = ('user__username', 'token')
