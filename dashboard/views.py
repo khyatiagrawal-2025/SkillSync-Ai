@@ -19,3 +19,14 @@ def dashboard(request):
     
     # Dashboard template ko render karna
     return render(request, "dashboard/dashboard.html", context)
+
+def roadmap_view(request):
+    return render(request, 'dashboard/roadmap.html')
+
+@login_required
+def progress_view(request):
+    return render(request, 'dashboard/progress.html')
+
+@login_required
+def settings_view(request):
+    return render(request, "dashboard/settings.html")
