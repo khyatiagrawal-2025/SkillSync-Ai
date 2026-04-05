@@ -1,0 +1,16 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual Environment
+venv/
+env/
+
+# Database (isey upload nahi karte kyunki ye local data hota hai)
+db.sqlite3
+
+# Media files (user uploaded images)
+media/
+
+# IDE settings
+.vscode/

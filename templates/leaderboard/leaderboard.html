@@ -445,7 +445,7 @@
       <div class="nav-badge">🏆</div>
     </a>
     <div class="nav-label" style="margin-top:20px">Account</div>
-    <a href="#" class="nav-item">
+    <a href="{% url 'profile' %}" class="nav-item">
       <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
       <span>Profile</span>
     </a>
@@ -527,11 +527,11 @@
               </div>
 
               <!-- MENU -->
-              <a href="#" style="display:block;padding:10px 14px;font-size:.78rem;color:var(--sub);text-decoration:none"
+              <a href="{% url 'profile' %}" style="display:block;padding:10px 14px;font-size:.78rem;color:var(--sub);text-decoration:none"
                 onmouseover="this.style.background='rgba(255,255,255,.05)'" 
                 onmouseout="this.style.background='transparent'">👤 Profile</a>
 
-              <a href="#" style="display:block;padding:10px 14px;font-size:.78rem;color:var(--sub);text-decoration:none"
+              <a href="{% url 'settings' %}" style="display:block;padding:10px 14px;font-size:.78rem;color:var(--sub);text-decoration:none"
                 onmouseover="this.style.background='rgba(255,255,255,.05)'" 
                 onmouseout="this.style.background='transparent'">⚙️ Settings</a>
 
@@ -790,7 +790,7 @@
               <!-- YOU ROW -->
               <tr class="lb-row me">
                 <td><div class="rn rn-n" style="background:rgba(124,58,237,.2);border-color:rgba(124,58,237,.4);color:var(--violet2)">7</div></td>
-                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#6d28d9,#ec4899)">K</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">{{ request.user.get_full_name|default:request.user.username }} <span class="pill pill-v" style="font-size:.6rem">You</span><span class="pill pill-gr" style="font-size:.6rem">🔺 +3 week</span></div><div style="font-size:.72rem;color:var(--sub)">IIT BHU · Backend Dev</div></div></div></td>
+                <td><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:36px;height:36px;font-size:.9rem;background:linear-gradient(135deg,#6d28d9,#ec4899)">{{ user.first_name|slice:":1"|upper }}</div><div><div style="font-weight:700;font-size:.88rem;color:var(--text);display:flex;align-items:center;gap:6px">{{ request.user.get_full_name|default:request.user.username }} <span class="pill pill-v" style="font-size:.6rem">You</span><span class="pill pill-gr" style="font-size:.6rem">🔺 +3 week</span></div><div style="font-size:.72rem;color:var(--sub)">IIT BHU · Backend Dev</div></div></div></td>
                 <td><span class="pill pill-v" style="font-size:.72rem;background:rgba(124,58,237,.22);border-color:rgba(124,58,237,.45)">⚡ 2,840</span></td>
                 <td class="lb-col-st"><span class="pill pill-g" style="font-size:.72rem">🔥 12 days</span></td>
                 <td class="lb-col-lv"><span class="pill pill-gr" style="font-size:.72rem">🎯 Lv.7</span></td>
