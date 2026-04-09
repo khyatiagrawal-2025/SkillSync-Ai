@@ -3,6 +3,8 @@ import uuid
 from django.contrib.auth.models import User
 class Student(models.Model):
     # SkillSync-AI Student Profile
+    # 🔗 LINK WITH DJANGO USER
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)  # ✅ FIX
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)

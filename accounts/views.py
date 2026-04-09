@@ -14,7 +14,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.decorators import login_required
 
 
-class login_view(AuthLoginView):
+class LoginView(AuthLoginView):
     template_name = 'accounts/login.html'
     def get_success_url(self):
         # Check if the user is an admin
@@ -28,8 +28,14 @@ def register_view(request):
         
         if form.is_valid():
             user = form.save()
+
+            # Student profile create (IMPORTANT)
+            Student.objects.create(
+                user=user,
+                name=form.cleaned_data.get('username')
+            )
+
             login(request, user)
-            messages.success(request, f'Welcome, {user.username}!')
             return redirect('dashboard')
         else:
             messages.error(request, form.errors)
@@ -39,32 +45,6 @@ def register_view(request):
      
     return render(request, 'accounts/register.html', {'form': form})
 
-# def forgot_password_view(request):
-    
-#     if request.method == 'POST':
-#         name = request.POST.get('user_name')
-#         phone_number = request.POST.get('phone_number')
-#         email = request.POST.get('user_email')
-       
-        
-#         if name and phone_number.isdigit() and len(phone_number) == 10 and email :
-#             data = forgot_password_view(Name=name, 
-#                              Email=email,
-#                             )
-#             data.save()
-            
-#      # Send confirmation email
-#             subject = 'Reset Password Confirmation'
-#             message = "Hello ,\n\nYour booking has been successfully received.\n" \
-                      
-            
-#             from_email = settings.DEFAULT_FROM_EMAIL
-#             recipient_list = [email]  # The email of the user
-
-#             # Send the confirmation email
-#             send_mail(subject, message, from_email, recipient_list)
-            
-#             return render(request, 'accounts/forgot_password.html')
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'accounts/forgot_password.html'

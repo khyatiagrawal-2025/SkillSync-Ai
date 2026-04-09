@@ -6,8 +6,8 @@ from .models import Student, Attendance, PasswordResetToken # Apne models import
 # Student model ko register karein
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone_number', 'created_at') # Panel mein ye columns dikhenge
-    search_fields = ('name', 'email') # Search bar enable ho jayega
+    list_display = ('user', 'name', 'phone_number', 'created_at') # Panel mein ye columns dikhenge
+    search_fields = ('name', 'user') # Search bar enable ho jayega
 
 # Attendance model ko register karein
 @admin.register(Attendance)

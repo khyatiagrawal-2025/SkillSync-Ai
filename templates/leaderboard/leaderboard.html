@@ -357,10 +357,17 @@
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px">
     <div style="display:flex;align-items:center;gap:16px">
       <div class="ring-gold">
-        <div class="av" style="width:52px;height:52px;font-size:1.3rem;background:linear-gradient(135deg,#4c1d95,#1e3a8a)">
+          {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}"
+                 style="width:80px;height:80px;border-radius:50%;object-fit:cover"
+                 alt="Avatar">
+          {% else %}
+           <div class="av" style="width:52px;height:52px;font-size:1.3rem;background:linear-gradient(135deg,#4c1d95,#1e3a8a)">
           {{ request.user.first_name|slice:":1"|upper }}
+            </div>
+          {% endif %}
         </div>
-      </div>
+      
       <div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
           <h2 class="font-display" style="font-weight:800;font-size:1.1rem;color:#f0f0fc">

@@ -9,7 +9,8 @@ from django.views.decorators.cache import never_cache
 @never_cache
 def leaderboard_view(request):
     
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    
     # Sabhi users ko XP ke hisaab se rank karo
     all_users = UserProfile.objects.all().order_by('-xp_points')
     
@@ -21,12 +22,12 @@ def leaderboard_view(request):
     
     # Current logged-in user ki profile
     user_profile = None
-    user_rank = 0
-    if request.user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=request.user)
-        # Rank nikalne ke liye
-        user_rank = list(all_users).index(user_profile) + 1
-
+    user_rank = 1
+    for profile in all_users:
+        if profile.user == request.user:
+            break
+        user_rank += 1
+        
     context = {
         'top_3': top_3,
         'remaining_users': remaining_users,

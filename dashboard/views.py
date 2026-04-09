@@ -7,14 +7,13 @@ from django.views.decorators.cache import never_cache
 @never_cache
 def dashboard(request):
     # 1. Accounts App se Data: Total Students count
-    total_students_count = Student.objects.count()
+    student = Student.objects.get(user=request.user)
+    total_students = Student.objects.count()
 
-    # Context mein sabhi data ko ek saath bhejna
     context = {
-        'total_students': total_students_count,
-        'user': request.user,
-        # 'stats': user_stats, # Agar model banaya hai toh
-        'page_name': "SkillSync-AI Dashboard"
+        'total_students': total_students,
+        'student': student,
+        'user': request.user
     }
     
     # Dashboard template ko render karna
