@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.decorators import login_required
 
 
 class login_view(AuthLoginView):
@@ -99,3 +100,18 @@ def LogoutView(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('home')  # Redirect to a page after logout, e.g., the home page
+
+
+@login_required
+def update_account(request):
+    if request.method == "POST":
+        user = request.user
+        
+        # Example: basic fields update
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        user.save()
+
+        return redirect('settings')  # ya 'dashboard'
+    
+    return redirect('settings')

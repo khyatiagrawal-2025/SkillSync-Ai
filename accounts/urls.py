@@ -10,6 +10,8 @@ urlpatterns = [
 
     path("logout/", views.LogoutView, name="logout"),
 
+    path('update-account/', views.update_account, name='update_account'),
+
     # 🔑 Password Reset Flow
     path("forgot-password/", CustomPasswordResetView.as_view(), name="password_reset"),
 

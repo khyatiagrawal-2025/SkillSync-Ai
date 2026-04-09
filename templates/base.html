@@ -1,0 +1,944 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SkillSync AI{% endblock %}</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Syne (display) + Plus Jakarta Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════════════════════════ */
+    :root {
+      /* Palette */
+      --bg:         #06060f;
+      --bg-2:       #0b0b1a;
+      --surface:    rgba(255,255,255,.042);
+      --surface-2:  rgba(255,255,255,.07);
+      --rim:        rgba(255,255,255,.075);
+      --rim-hi:     rgba(139,92,246,.5);
+
+      /* Text */
+      --text:       #ededfc;
+      --text-sub:   #7b7ba0;
+      --text-muted: #3e3e5a;
+
+      /* Brand */
+      --violet:     #7c3aed;
+      --violet-hi:  #a78bfa;
+      --blue:       #3b82f6;
+      --blue-hi:    #93c5fd;
+      --cyan:       #06b6d4;
+      --green:      #10b981;
+      --amber:      #f59e0b;
+      --red:        #ef4444;
+      --pink:       #ec4899;
+
+      /* Sidebar */
+      --sb-w:       230px;   /* expanded width  */
+      --sb-mini:    68px;    /* collapsed width */
+
+      /* Topbar */
+      --tb-h:       60px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(124,58,237,.4); border-radius: 9px; }
+    ::selection { background: rgba(124,58,237,.35); color: #fff; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       ANIMATED BACKGROUND LAYERS
+    ═══════════════════════════════════════════════════════════════ */
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none; overflow: hidden;
+    }
+    /* Radial mesh */
+    .bg-mesh {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 75% 55% at 12% 20%, rgba(109,40,217,.28) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 45% at 85% 78%, rgba(37,99,235,.22) 0%, transparent 58%),
+        radial-gradient(ellipse 45% 50% at 50% 2%,  rgba(124,58,237,.09) 0%, transparent 50%),
+        var(--bg);
+      animation: meshDrift 22s ease-in-out infinite alternate;
+    }
+    @keyframes meshDrift {
+      0%   { filter: hue-rotate(0deg)   brightness(1);    }
+      50%  { filter: hue-rotate(14deg)  brightness(1.06); }
+      100% { filter: hue-rotate(-10deg) brightness(.97);  }
+    }
+    /* Floating blobs */
+    .blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(90px); pointer-events: none;
+    }
+    .blob-1 { width:580px;height:580px;background:radial-gradient(circle,rgba(109,40,217,.36),transparent 70%);top:-160px;left:-130px;animation:bm1 24s ease-in-out infinite;opacity:.9; }
+    .blob-2 { width:480px;height:480px;background:radial-gradient(circle,rgba(37,99,235,.28),transparent 70%);bottom:-90px;right:-110px;animation:bm2 30s ease-in-out infinite;opacity:.9; }
+    .blob-3 { width:340px;height:340px;background:radial-gradient(circle,rgba(219,39,119,.2),transparent 70%);top:42%;left:56%;animation:bm3 20s ease-in-out infinite;opacity:.5; }
+    .blob-4 { width:220px;height:220px;background:radial-gradient(circle,rgba(6,182,212,.15),transparent 70%);top:20%;right:8%;animation:bm4 16s ease-in-out infinite;opacity:.4; }
+    @keyframes bm1 { 0%,100%{transform:translate(0,0)}   40%{transform:translate(55px,-38px)scale(1.07)}  80%{transform:translate(-28px,48px)scale(.93)} }
+    @keyframes bm2 { 0%,100%{transform:translate(0,0)}   45%{transform:translate(-58px,38px)scale(1.06)} 80%{transform:translate(38px,-52px)scale(.97)} }
+    @keyframes bm3 { 0%,100%{transform:translate(0,0)}   50%{transform:translate(-42px,26px)scale(1.09)} }
+    @keyframes bm4 { 0%,100%{transform:translate(0,0)}   50%{transform:translate(20px,-30px)scale(1.12)} }
+    /* Subtle grid */
+    .bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.013) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.013) 1px, transparent 1px);
+      background-size: 54px 54px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       GLASS CARD UTILITY
+    ═══════════════════════════════════════════════════════════════ */
+    .glass {
+      background: var(--surface);
+      border: 1px solid var(--rim);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .28s, box-shadow .28s, transform .28s cubic-bezier(.16,1,.3,1);
+    }
+    .glass::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent);
+      pointer-events: none;
+    }
+    .glass:hover {
+      border-color: rgba(139,92,246,.26);
+      box-shadow: 0 18px 50px rgba(0,0,0,.42), 0 0 28px rgba(109,40,217,.16);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       SIDEBAR
+    ═══════════════════════════════════════════════════════════════ */
+    #sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: var(--sb-w);
+      z-index: 200;
+      display: flex; flex-direction: column;
+      background: rgba(6,6,15,.92);
+      border-right: 1px solid var(--rim);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      /* THE KEY FIX: transition width, NOT transform */
+      transition:
+        width .32s cubic-bezier(.4,0,.2,1),
+        box-shadow .32s;
+      will-change: width;
+      overflow: hidden;           /* clips content while collapsing */
+    }
+    /* Collapsed state — just set width */
+    #sidebar.collapsed { width: var(--sb-mini); }
+
+    /* Sidebar glow line at top */
+    #sidebar::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--violet), var(--blue), transparent);
+      opacity: .6;
+    }
+
+    /* ── Logo area ── */
+    .sb-logo-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 14px 16px;
+      border-bottom: 1px solid var(--rim);
+      min-height: 68px;
+      flex-shrink: 0;
+    }
+    .sb-logo-link {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; overflow: hidden;
+    }
+    .sb-logo-mark {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 900; font-size: .95rem; color: #fff;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      box-shadow: 0 0 20px rgba(124,58,237,.55);
+      animation: markPulse 3.5s ease-in-out infinite;
+    }
+    @keyframes markPulse {
+      0%,100% { box-shadow: 0 0 16px rgba(124,58,237,.5);  }
+      50%      { box-shadow: 0 0 32px rgba(59,130,246,.7), 0 0 52px rgba(124,58,237,.25); }
+    }
+    .sb-logo-text {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: .94rem; letter-spacing: -.02em; white-space: nowrap;
+      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      /* Fade out when collapsing */
+      opacity: 1; transition: opacity .2s .05s;
+    }
+    #sidebar.collapsed .sb-logo-text { opacity: 0; transition: opacity .12s 0s; }
+
+    /* ── Toggle button ── */
+    .sb-toggle {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.06); border: 1px solid var(--rim);
+      cursor: pointer; color: var(--text-sub);
+      transition: all .2s; flex-shrink: 0;
+    }
+    .sb-toggle:hover { background: rgba(255,255,255,.11); color: var(--text); border-color: rgba(255,255,255,.14); }
+    .sb-toggle svg { width: 14px; height: 14px; transition: transform .3s; }
+    #sidebar.collapsed .sb-toggle { margin: 0 auto; }
+
+    /* ── Section label ── */
+    .sb-section {
+      font-size: .6rem; font-weight: 700; letter-spacing: .15em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 0 14px; margin: 14px 0 5px;
+      white-space: nowrap;
+      opacity: 1; transition: opacity .15s;
+    }
+    #sidebar.collapsed .sb-section { opacity: 0; }
+
+    /* ── Nav link ── */
+    .sb-link {
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 14px; border-radius: 11px; margin: 1px 8px;
+      font-size: .875rem; font-weight: 500; color: rgba(222,222,240,.5);
+      text-decoration: none; cursor: pointer;
+      border: 1px solid transparent;
+      transition: background .2s, color .2s, border-color .2s, box-shadow .2s;
+      position: relative; white-space: nowrap;
+      overflow: hidden;
+    }
+    .sb-link:hover {
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+    }
+    .sb-link.active {
+      background: linear-gradient(135deg, rgba(124,58,237,.24), rgba(59,130,246,.14));
+      border-color: rgba(124,58,237,.4);
+      color: #c4b5fd;
+      box-shadow: 0 0 18px rgba(124,58,237,.22);
+    }
+    /* Icon */
+    .sb-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: .7; transition: opacity .2s; }
+    .sb-link:hover svg, .sb-link.active svg { opacity: 1; }
+
+    /* Link text */
+    .sb-link-text {
+      flex: 1; opacity: 1; transition: opacity .18s .06s;
+    }
+    #sidebar.collapsed .sb-link-text { opacity: 0; transition: opacity .1s 0s; }
+
+    /* Badge */
+    .sb-badge {
+      min-width: 18px; height: 18px; padding: 0 5px;
+      border-radius: 999px; font-size: .6rem; font-weight: 800;
+      background: var(--violet); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      opacity: 1; transition: opacity .15s;
+    }
+    #sidebar.collapsed .sb-badge { opacity: 0; }
+
+    /* Tooltip on collapsed hover */
+    .sb-link .sb-tip {
+      position: absolute; left: calc(var(--sb-mini) - 8px); top: 50%; transform: translateY(-50%);
+      background: rgba(10,10,22,.97); border: 1px solid var(--rim);
+      padding: 5px 11px; border-radius: 9px;
+      font-size: .78rem; white-space: nowrap; color: var(--text);
+      pointer-events: none; opacity: 0;
+      transition: opacity .18s;
+      z-index: 999;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    #sidebar.collapsed .sb-link:hover .sb-tip { opacity: 1; }
+
+    /* Active left indicator */
+    .sb-link.active::before {
+      content: ''; position: absolute; left: -8px; top: 25%; bottom: 25%;
+      width: 3px; border-radius: 0 3px 3px 0;
+      background: linear-gradient(180deg, #a78bfa, #60a5fa);
+      box-shadow: 0 0 10px rgba(167,139,250,.6);
+    }
+
+    /* ── Bottom area ── */
+    .sb-bottom {
+      margin-top: auto; padding: 10px 8px 14px;
+      border-top: 1px solid var(--rim);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    /* User chip */
+    .sb-user {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px; border-radius: 11px;
+      background: rgba(255,255,255,.04); border: 1px solid var(--rim);
+      cursor: pointer; transition: all .2s; overflow: hidden;
+    }
+    .sb-user:hover { background: rgba(255,255,255,.08); border-color: rgba(124,58,237,.35); }
+    .sb-user-av {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #7c3aed, #ec4899);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 800; color: #fff;
+    }
+    .sb-user-info { min-width: 0; flex: 1; opacity: 1; transition: opacity .15s; }
+    #sidebar.collapsed .sb-user-info { opacity: 0; }
+
+    /* Logout */
+    .sb-logout {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; border-radius: 11px; margin: 0 0px;
+      font-size: .875rem; font-weight: 600;
+      color: rgba(239,68,68,.8); text-decoration: none;
+      background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2);
+      cursor: pointer; transition: all .2s;
+      overflow: hidden; white-space: nowrap;
+    }
+    .sb-logout:hover {
+      background: rgba(239,68,68,.15);
+      border-color: rgba(239,68,68,.45);
+      color: #fca5a5;
+      box-shadow: 0 0 18px rgba(239,68,68,.2);
+    }
+    .sb-logout svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .sb-logout-text { opacity: 1; transition: opacity .15s; }
+    #sidebar.collapsed .sb-logout-text { opacity: 0; }
+    #sidebar.collapsed .sb-logout { justify-content: center; padding: 9px 0; margin: 0 4px; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       MAIN AREA — THE KEY: use margin-left, not flex offset
+    ═══════════════════════════════════════════════════════════════ */
+    #page-wrap {
+      margin-left: var(--sb-w);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      transition: margin-left .32s cubic-bezier(.4,0,.2,1);
+      position: relative; z-index: 10;
+    }
+    /* When sidebar is collapsed, shrink margin to match */
+    body.sb-collapsed #page-wrap { margin-left: var(--sb-mini); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       TOPBAR
+    ═══════════════════════════════════════════════════════════════ */
+    #topbar {
+      position: sticky; top: 0; z-index: 100;
+      height: var(--tb-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 26px;
+      background: rgba(6,6,15,.78);
+      border-bottom: 1px solid var(--rim);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+    .tb-left { display: flex; align-items: center; gap: 10px; }
+    /* Hamburger (mobile only) */
+    .tb-hamburger {
+      display: none; padding: 7px; border-radius: 9px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--rim);
+      cursor: pointer; color: var(--text-sub);
+      transition: all .2s;
+    }
+    .tb-hamburger:hover { background: rgba(255,255,255,.1); color: var(--text); }
+    .tb-hamburger svg { width: 18px; height: 18px; }
+
+    /* Breadcrumb */
+    .tb-breadcrumb {
+      display: flex; align-items: center; gap: 7px;
+      font-size: .82rem; color: var(--text-sub);
+    }
+    .tb-breadcrumb .bc-active { color: var(--text); font-weight: 600; }
+
+    /* Right side */
+    .tb-right { display: flex; align-items: center; gap: 10px; }
+
+    /* XP / Streak chips */
+    .tb-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 13px; border-radius: 999px;
+      font-size: .76rem; font-weight: 700;
+      border: 1px solid;
+    }
+    .chip-xp {
+      background: rgba(124,58,237,.12);
+      border-color: rgba(124,58,237,.28);
+      color: #c4b5fd;
+    }
+    .chip-streak {
+      background: rgba(245,158,11,.1);
+      border-color: rgba(245,158,11,.28);
+      color: #fbbf24;
+    }
+
+    /* Notification bell */
+    .tb-notif {
+      position: relative; padding: 8px; border-radius: 10px;
+      background: rgba(255,255,255,.04); border: 1px solid var(--rim);
+      cursor: pointer; transition: all .2s; display: flex;
+    }
+    .tb-notif:hover { background: rgba(255,255,255,.09); border-color: rgba(124,58,237,.35); }
+    .tb-notif svg { width: 16px; height: 16px; color: var(--text-sub); }
+    .notif-dot {
+      position: absolute; top: 7px; right: 7px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--pink);
+      box-shadow: 0 0 7px rgba(236,72,153,.8);
+      animation: dotPing 2s ease-in-out infinite;
+    }
+    @keyframes dotPing { 0%,100%{opacity:1}50%{opacity:.4} }
+
+    /* User chip */
+    .tb-user {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 13px; border-radius: 10px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--rim);
+      cursor: pointer; transition: all .2s;
+    }
+    .tb-user:hover { background: rgba(255,255,255,.09); border-color: rgba(124,58,237,.35); }
+    .tb-av {
+      width: 27px; height: 27px; border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #ec4899);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .tb-username { font-size: .82rem; font-weight: 600; color: var(--text); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CONTENT
+    ═══════════════════════════════════════════════════════════════ */
+    #main-content {
+      flex: 1;
+      padding: 28px 28px 60px;
+      /* Ensures scroll works under topbar */
+      overflow-y: auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       SHARED UTILITIES (for child pages)
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* Page header */
+    .page-title {
+      font-family: 'Syne', sans-serif; font-weight: 900;
+      font-size: clamp(1.5rem, 3vw, 2.1rem); letter-spacing: -.04em; line-height: 1.05;
+      background: linear-gradient(135deg, #fff 0%, #e2e8f0 40%, #c4b5fd 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-subtitle { font-size: .86rem; color: var(--text-sub); margin-top: 4px; }
+    .glow-divider {
+      height: 1px; margin: 14px 0 24px;
+      background: linear-gradient(90deg,
+        rgba(124,58,237,.7),
+        rgba(59,130,246,.45),
+        rgba(6,182,212,.25),
+        transparent);
+      border-radius: 2px;
+    }
+
+    /* Progress bars */
+    .bar-track {
+      background: rgba(255,255,255,.07);
+      border-radius: 999px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 999px;
+      position: relative; overflow: hidden;
+    }
+    .bar-fill::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+      animation: shimmer 2.5s ease-in-out infinite;
+      transform: translateX(-100%);
+    }
+    @keyframes shimmer { to { transform: translateX(250%); } }
+
+    /* Pill badges */
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: .7rem; font-weight: 700; border: 1px solid;
+    }
+    .pill-v  { background:rgba(124,58,237,.14); border-color:rgba(124,58,237,.32); color:#c4b5fd; }
+    .pill-b  { background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.3);  color:#93c5fd; }
+    .pill-g  { background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.3);  color:#4ade80; }
+    .pill-a  { background:rgba(245,158,11,.1);  border-color:rgba(245,158,11,.28); color:#fbbf24; }
+    .pill-r  { background:rgba(239,68,68,.1);   border-color:rgba(239,68,68,.28);  color:#fca5a5; }
+    .pill-pk { background:rgba(236,72,153,.1);  border-color:rgba(236,72,153,.28); color:#f9a8d4; }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 22px; border-radius: 11px; border: none;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      color: #fff; font-family: inherit; font-size: .875rem; font-weight: 700;
+      cursor: pointer; position: relative; overflow: hidden;
+      box-shadow: 0 0 24px rgba(124,58,237,.4);
+      transition: transform .22s, box-shadow .22s;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.18), transparent);
+      opacity: 0; transition: opacity .2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 38px rgba(124,58,237,.6), 0 10px 28px rgba(0,0,0,.25); }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary:active { transform: scale(.97) translateY(0); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 11px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--rim);
+      color: var(--text-sub); font-family: inherit; font-size: .875rem; font-weight: 600;
+      cursor: pointer; transition: all .22s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.1); border-color: rgba(124,58,237,.38); color: var(--text); transform: translateY(-1px); }
+    .btn-ghost:active { transform: scale(.97); }
+
+    /* Stat card base */
+    .stat-card { padding: 20px 22px; cursor: default; }
+    .stat-icon-wrap { transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
+    .stat-card:hover .stat-icon-wrap { transform: scale(1.15) rotate(-5deg); }
+
+    /* Skill bar animation */
+    .skill-bar { animation: barGrow 1.4s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes barGrow { from { width: 0 !important; } }
+
+    /* Entrance animations */
+    .anim-up {
+      opacity: 0; transform: translateY(20px);
+      animation: animUp .65s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    @keyframes animUp { to { opacity:1; transform:translateY(0); } }
+    .d-1{animation-delay:.05s} .d-2{animation-delay:.10s} .d-3{animation-delay:.15s}
+    .d-4{animation-delay:.20s} .d-5{animation-delay:.25s} .d-6{animation-delay:.30s}
+    .d-7{animation-delay:.35s} .d-8{animation-delay:.40s}
+
+    /* ═══════════════════════════════════════════════════════════════
+       MOBILE OVERLAY + BOTTOM NAV
+    ═══════════════════════════════════════════════════════════════ */
+    #mob-overlay {
+      display: none; position: fixed; inset: 0; z-index: 190;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+    }
+    #mob-overlay.open { display: block; }
+
+    .mob-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 180;
+      background: rgba(6,6,15,.95); border-top: 1px solid var(--rim);
+      backdrop-filter: blur(20px); padding: 9px 6px;
+      justify-content: space-around; gap: 2px;
+    }
+    .mob-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      font-size: .58rem; font-weight: 600; color: var(--text-muted);
+      cursor: pointer; transition: color .18s; padding: 5px 10px; border-radius: 10px;
+      text-decoration: none;
+    }
+    .mob-nav-item svg { width: 20px; height: 20px; }
+    .mob-nav-item.active { color: #c4b5fd; }
+    .mob-nav-item.active svg { filter: drop-shadow(0 0 7px rgba(167,139,250,.7)); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       RESPONSIVE BREAKPOINTS
+    ═══════════════════════════════════════════════════════════════ */
+    /* Tablet: auto-collapse sidebar */
+    @media (max-width: 1024px) {
+      #sidebar { width: var(--sb-mini); }
+      #sidebar .sb-logo-text,
+      #sidebar .sb-section,
+      #sidebar .sb-link-text,
+      #sidebar .sb-badge,
+      #sidebar .sb-user-info,
+      #sidebar .sb-logout-text { opacity: 0; pointer-events: none; }
+      #sidebar .sb-toggle { margin: 0 auto; }
+      #sidebar .sb-logout { justify-content: center; }
+      #page-wrap { margin-left: var(--sb-mini); }
+      body.sb-collapsed #page-wrap { margin-left: var(--sb-mini); }
+    }
+    /* Mobile: sidebar off-screen, hamburger, bottom nav */
+    @media (max-width: 768px) {
+      #sidebar {
+        width: var(--sb-w) !important;
+        transform: translateX(calc(-1 * var(--sb-w)));
+        transition: transform .32s cubic-bezier(.4,0,.2,1);
+        box-shadow: none;
+      }
+      #sidebar.mob-open {
+        transform: translateX(0);
+        box-shadow: 8px 0 40px rgba(0,0,0,.5);
+      }
+      #page-wrap { margin-left: 0 !important; }
+      .tb-hamburger { display: flex; }
+      .tb-chips { display: none; }
+      .mob-nav { display: flex; }
+      #main-content { padding: 16px 14px 90px; }
+    }
+    @media (max-width: 480px) {
+      #topbar { padding: 0 14px; }
+      .tb-username { display: none; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       PAGE-SPECIFIC BLOCK
+    ═══════════════════════════════════════════════════════════════ */
+    {% block extra_styles %}{% endblock %}
+  </style>
+</head>
+
+<body>
+
+<!-- ── BACKGROUND LAYERS ──────────────────────────────────────── -->
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-grid"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+</div>
+
+<!-- ── MOBILE OVERLAY ─────────────────────────────────────────── -->
+<div id="mob-overlay" onclick="closeMobSidebar()" aria-hidden="true"></div>
+
+<!-- ═════════════════════════════════════════════════════════════
+     SIDEBAR
+═════════════════════════════════════════════════════════════ -->
+<aside id="sidebar" aria-label="Main navigation">
+
+  <!-- Logo + Toggle -->
+  <div class="sb-logo-row">
+    <a class="sb-logo-link" href="{% url 'dashboard' %}">
+      <div class="sb-logo-mark">S</div>
+      <span class="sb-logo-text">SkillSync AI</span>
+    </a>
+    <button class="sb-toggle" id="sbToggleBtn" onclick="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">
+      <!-- Arrow left icon — flips when collapsed -->
+      <svg id="sbToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Scrollable nav area -->
+  <nav style="flex:1; overflow-y:auto; overflow-x:hidden; padding: 4px 0;">
+
+    <div class="sb-section">Main</div>
+
+    <a class="sb-link {% block nav_dashboard %}{% endblock %}" href="{% url 'dashboard' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      <span class="sb-link-text">Dashboard</span>
+      <div class="sb-tip">Dashboard</div>
+    </a>
+
+    <a class="sb-link {% block nav_roadmap %}{% endblock %}" href="{% url 'roadmap' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/>
+      </svg>
+      <span class="sb-link-text">Roadmap</span>
+      <div class="sb-tip">Roadmap</div>
+    </a>
+
+    <a class="sb-link {% block nav_progress %}{% endblock %}" href="{% url 'progress' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+      <span class="sb-link-text">Progress</span>
+      <div class="sb-tip">Progress</div>
+    </a>
+
+    <a class="sb-link {% block nav_leaderboard %}{% endblock %}" href="{% url 'leaderboard' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+      </svg>
+      <span class="sb-link-text">Leaderboard</span>
+      <span class="sb-badge">🏆</span>
+      <div class="sb-tip">Leaderboard</div>
+    </a>
+
+    <div class="sb-section" style="margin-top:18px">Account</div>
+
+    <a class="sb-link {% block nav_profile %}{% endblock %}" href="{% url 'profile' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+      </svg>
+      <span class="sb-link-text">Profile</span>
+      <div class="sb-tip">Profile</div>
+    </a>
+
+    <a class="sb-link {% block nav_settings %}{% endblock %}" href="{% url 'settings' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <span class="sb-link-text">Settings</span>
+      <div class="sb-tip">Settings</div>
+    </a>
+
+  </nav>
+
+  <!-- Bottom: User + Logout -->
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-user-av">{{ user.username|first|upper }}</div>
+      <div class="sb-user-info" style="min-width:0;">
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ user.username }}</div>
+        <div style="font-size:.66rem;color:rgba(148,163,184,.5)">Level 7 · Active</div>
+      </div>
+    </div>
+
+    <a href="{% url 'logout' %}" class="sb-logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      <span class="sb-logout-text">Logout</span>
+      <div class="sb-tip">Logout</div>
+    </a>
+  </div>
+
+</aside>
+
+<!-- ═════════════════════════════════════════════════════════════
+     PAGE WRAPPER (margin-left tracks sidebar width)
+═════════════════════════════════════════════════════════════ -->
+<div id="page-wrap">
+
+  <!-- ── TOPBAR ──────────────────────────────────────────────── -->
+  <header id="topbar">
+    <div class="tb-left">
+      <!-- Hamburger (mobile only) -->
+      <button class="tb-hamburger" onclick="openMobSidebar()" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <!-- Breadcrumb -->
+      <nav class="tb-breadcrumb" aria-label="Breadcrumb">
+        <svg style="width:13px;height:13px;color:var(--text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span style="color:var(--text-muted)">Home</span>
+        <span style="color:var(--text-muted);">/</span>
+        <span class="bc-active">{% block breadcrumb %}Dashboard{% endblock %}</span>
+      </nav>
+    </div>
+
+    <div class="tb-right">
+      <!-- XP + Streak -->
+      <div class="tb-chips" style="display:flex;gap:8px;">
+        <div class="tb-chip chip-xp">⚡ {{ user.xp|default:"2,840" }} XP</div>
+        <div class="tb-chip chip-streak">🔥 {{ user.streak|default:"12" }}d streak</div>
+      </div>
+
+      <!-- Notification -->
+      <button class="tb-notif" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span class="notif-dot"></span>
+      </button>
+
+      <!-- User chip -->
+      <div class="tb-user">
+        <div class="tb-av">{{ user.username|first|upper }}</div>
+        <span class="tb-username">Hi, {{ user.username }}</span>
+        <svg style="width:12px;height:12px;color:var(--text-muted);flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main id="main-content">
+    {% block content %}
+    <!-- Child pages inject content here -->
+    {% endblock %}
+  </main>
+
+</div><!-- /#page-wrap -->
+
+<!-- ═════════════════════════════════════════════════════════════
+     MOBILE BOTTOM NAV
+═════════════════════════════════════════════════════════════ -->
+<nav class="mob-nav" aria-label="Mobile navigation">
+
+  <a class="mob-nav-item {% block mob_dashboard %}{% endblock %}" href="{% url 'dashboard' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+    </svg>
+    Home
+  </a>
+
+  <a class="mob-nav-item {% block mob_roadmap %}{% endblock %}" href="{% url 'roadmap' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/>
+    </svg>
+    Roadmap
+  </a>
+
+  <a class="mob-nav-item {% block mob_leaderboard %}{% endblock %}" href="{% url 'leaderboard' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+    </svg>
+    Ranks
+  </a>
+
+  <a class="mob-nav-item {% block mob_profile %}{% endblock %}" href="{% url 'profile' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+    </svg>
+    Profile
+  </a>
+
+  <a class="mob-nav-item {% block mob_settings %}{% endblock %}" href="{% url 'settings' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+    Settings
+  </a>
+
+</nav>
+
+<!-- ═════════════════════════════════════════════════════════════
+     JAVASCRIPT — Sidebar logic only
+═════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Elements ── */
+  var sidebar  = document.getElementById('sidebar');
+  var pageWrap = document.getElementById('page-wrap');
+  var icon     = document.getElementById('sbToggleIcon');
+  var overlay  = document.getElementById('mob-overlay');
+
+  /* ── State ── */
+  var isMobile  = function () { return window.innerWidth <= 768; };
+  var isTablet  = function () { return window.innerWidth <= 1024 && window.innerWidth > 768; };
+  var collapsed = false;   // desktop collapse state
+
+  /* ── Restore saved state (desktop only) ── */
+  try {
+    if (!isMobile() && !isTablet()) {
+      collapsed = localStorage.getItem('sb_collapsed') === 'true';
+      if (collapsed) applyCollapsed(true, false);
+    }
+  } catch (e) {}
+
+  /* ── Apply collapsed state ── */
+  function applyCollapsed(state, save) {
+    collapsed = state;
+
+    if (state) {
+      sidebar.classList.add('collapsed');
+      document.body.classList.add('sb-collapsed');
+      /* Rotate arrow to point right */
+      icon.innerHTML = '<path d="M9 18l6-6-6-6"/>';
+    } else {
+      sidebar.classList.remove('collapsed');
+      document.body.classList.remove('sb-collapsed');
+      /* Arrow points left */
+      icon.innerHTML = '<path d="M15 18l-6-6 6-6"/>';
+    }
+
+    if (save) {
+      try { localStorage.setItem('sb_collapsed', state); } catch (e) {}
+    }
+  }
+
+  /* ── Desktop toggle ── */
+  window.toggleSidebar = function () {
+    if (isMobile()) return; /* handled by mobile open/close */
+    applyCollapsed(!collapsed, true);
+  };
+
+  /* ── Mobile: open sidebar as overlay ── */
+  window.openMobSidebar = function () {
+    sidebar.classList.add('mob-open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  /* ── Mobile: close sidebar ── */
+  window.closeMobSidebar = function () {
+    sidebar.classList.remove('mob-open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  /* ── On resize: reset mobile state if going desktop ── */
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (!isMobile()) {
+        closeMobSidebar();
+        /* Reapply saved desktop collapsed state */
+        try {
+          var saved = localStorage.getItem('sb_collapsed') === 'true';
+          applyCollapsed(saved, false);
+        } catch (e) {}
+      }
+    }, 120);
+  });
+
+  /* ── Close mobile sidebar on nav link click ── */
+  sidebar.querySelectorAll('.sb-link, .sb-logout').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (isMobile()) closeMobSidebar();
+    });
+  });
+
+  /* ── Skill bar entrance animation trigger ── */
+  document.addEventListener('DOMContentLoaded', function () {
+    /* Animate skill bars after a short delay */
+    setTimeout(function () {
+      document.querySelectorAll('.skill-bar').forEach(function (bar) {
+        var target = bar.getAttribute('data-width') || bar.style.width;
+        bar.style.width = '0';
+        requestAnimationFrame(function () {
+          bar.style.transition = 'width 1.4s cubic-bezier(.34,1.56,.64,1)';
+          bar.style.width = target;
+        });
+      });
+    }, 200);
+  });
+
+})();
+</script>
+
+{% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

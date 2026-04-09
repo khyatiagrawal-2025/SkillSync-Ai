@@ -14,3 +14,8 @@ media/
 
 # IDE settings
 .vscode/
+
+project/
+__pycache__/
+*.pyc
+db.sqlite3
