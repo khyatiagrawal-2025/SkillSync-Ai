@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}SkillSync AI — Edit Profile{% endblock %}
-{% block page_label %}Edit Profile{% endblock %}
+{% block breadcrumb %} <a href="{% url 'profile' %}"> <span style="color:var(--text-muted);"> Profile /  </span> </a>   Edit Profile {% endblock %}
 {% block nav_profile %}active{% endblock %}
 
 {% block extra_styles %}
