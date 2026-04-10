@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from .models import Student
 from django.views.decorators.http import require_POST
 from django.contrib.auth.views import LoginView as AuthLoginView
 from .forms import CustomUserForm
@@ -28,12 +27,6 @@ def register_view(request):
         
         if form.is_valid():
             user = form.save()
-
-            # Student profile create (IMPORTANT)
-            Student.objects.create(
-                user=user,
-                name=form.cleaned_data.get('username')
-            )
 
             login(request, user)
             return redirect('dashboard')

@@ -1,11 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-from accounts.models import Student
+
 
 
 # 2. Performance Model: To track SkillSync-AI scores
 class Performance(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
     subject = models.CharField(max_length=100)
     score = models.IntegerField()
     attendance_percentage = models.DecimalField(max_digits=5, decimal_places=2)

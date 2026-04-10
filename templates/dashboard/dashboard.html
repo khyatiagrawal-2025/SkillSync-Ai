@@ -234,7 +234,7 @@
       <span style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.28);color:#c4b5fd">+320 today</span>
     </div>
     <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:2rem;letter-spacing:-.04em;margin-bottom:2px;background:linear-gradient(135deg,#c4b5fd,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
-      {{ user.xp|default:"2,840" }}
+      {{ user.profile.xp_points|default:"0" }}
     </div>
     <div style="font-size:.76rem;color:var(--text-sub);font-weight:500">XP Points</div>
   </div>
@@ -246,7 +246,8 @@
       <span style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.28);color:#fbbf24">Personal best!</span>
     </div>
     <div style="font-family:'Syne',sans-serif;font-weight:900;font-size:2rem;letter-spacing:-.04em;margin-bottom:2px;color:#fbbf24">
-      {{ user.streak|default:"12" }}
+      {{ user.profile.streak|default:"0" }}
+      
     </div>
     <div style="font-size:.76rem;color:var(--text-sub);font-weight:500">Day Streak</div>
   </div>

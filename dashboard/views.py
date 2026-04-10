@@ -1,22 +1,23 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from accounts.models import Student
+from django.contrib.auth.models import User
 from django.views.decorators.cache import never_cache
 
 @login_required
 @never_cache
 def dashboard(request):
-    # 1. Accounts App se Data: Total Students count
-    student = Student.objects.get(user=request.user)
-    total_students = Student.objects.count()
+    # 1. Current logged-in user ko hi student maan rahe hain
+    student = request.user 
+    
+    # 2. Total registered users count
+    total_students = User.objects.count()
 
     context = {
         'total_students': total_students,
-        'student': student,
+        'student': student, # Ab ye sahi hai
         'user': request.user
     }
     
-    # Dashboard template ko render karna
     return render(request, "dashboard/dashboard.html", context)
 
 def roadmap_view(request):

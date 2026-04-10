@@ -12,7 +12,7 @@ class EditProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = [
-            'avatar', 'bio', 'date_of_birth', 'phone',
+             'bio', 'date_of_birth', 'phone_number', 'avatar',  
             'college', 'target_role',
             'github', 'linkedin', 'portfolio', 'twitter'
         ]

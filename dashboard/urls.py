@@ -1,6 +1,6 @@
 from django.urls import path
 
-from dashboard.models import Student
+
 from .views import dashboard  # correct name
 from . import views
 
