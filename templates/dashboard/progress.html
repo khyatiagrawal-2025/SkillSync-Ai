@@ -1,0 +1,795 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Progress — SkillSync AI{% endblock %}
+{% block breadcrumb %}Progress{% endblock %}
+{% block nav_progress %}active{% endblock %}
+{% block mob_progress %}active{% endblock %}
+
+<!-- ═══════════════════════════════════════════════
+     EXTRA STYLES  (injected into base.html <style>)
+═══════════════════════════════════════════════ -->
+{% block extra_styles %}
+
+/* Chart.js CDN loaded in extra_scripts */
+
+/* ── Progress page tokens (extend base vars) ── */
+:root {
+  --p-pu:    #a855f7;
+  --p-pu-d:  #7c3aed;
+  --p-bl:    #3b82f6;
+  --p-pk:    #ec4899;
+  --p-cy:    #06b6d4;
+  --p-gn:    #10b981;
+  --p-am:    #f59e0b;
+}
+
+/* ── Section title rule ── */
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.sec-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--rim), transparent);
+}
+
+/* ── Stat cards ── */
+.p-stat {
+  padding: 22px 20px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--rim);
+  backdrop-filter: blur(20px);
+  transition: border-color .28s, box-shadow .28s, transform .25s cubic-bezier(.16,1,.3,1);
+  position: relative; overflow: hidden; cursor: default;
+}
+.p-stat::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.11), transparent);
+}
+.p-stat:hover {
+  transform: translateY(-4px);
+  border-color: rgba(124,58,237,.3);
+  box-shadow: 0 16px 44px rgba(0,0,0,.38), 0 0 26px rgba(109,40,217,.14);
+}
+.p-stat-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 14px; flex-shrink: 0;
+}
+.p-stat-val {
+  font-family: 'Syne', sans-serif; font-weight: 900;
+  font-size: 2rem; letter-spacing: -.05em; line-height: 1;
+  background: linear-gradient(135deg, #fff 30%, #c4b5fd);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.p-stat-label {
+  font-size: .7rem; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 6px;
+}
+.p-stat-trend { font-size: .73rem; font-weight: 600; margin-top: 8px; }
+
+/* ── XP shimmer bar ── */
+.xp-track {
+  height: 10px; border-radius: 999px;
+  background: rgba(255,255,255,.06); overflow: hidden; position: relative;
+}
+.xp-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--p-pu-d), var(--p-pu), var(--p-bl));
+  box-shadow: 0 0 14px rgba(124,58,237,.5);
+  width: 0; transition: width 1.6s cubic-bezier(.22,1,.36,1);
+  position: relative; overflow: hidden;
+}
+.xp-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
+  animation: shimmer 2.2s ease-in-out infinite;
+  transform: translateX(-100%);
+}
+@keyframes shimmer { to { transform: translateX(350%); } }
+
+/* ── Skill bars ── */
+.sk-track { height: 7px; border-radius: 999px; background: rgba(255,255,255,.06); overflow: hidden; }
+.sk-fill   { height: 100%; border-radius: 999px; width: 0; transition: width 1.4s cubic-bezier(.22,1,.36,1); }
+
+/* ── Streak / heatmap ── */
+.streak-cell {
+  border-radius: 6px; height: 13px;
+  transition: transform .18s, opacity .18s;
+  cursor: default;
+}
+.streak-cell:hover { transform: scale(1.25); opacity: 1 !important; }
+
+/* ── Task items ── */
+.task-row {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 14px; border-radius: 11px;
+  background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.055);
+  margin-bottom: 7px;
+  transition: background .2s, border-color .2s, transform .2s;
+}
+.task-row:hover { background: rgba(124,58,237,.08); border-color: rgba(124,58,237,.22); transform: translateX(3px); }
+.task-chk {
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.chk-done { background: linear-gradient(135deg,rgba(124,58,237,.3),rgba(59,130,246,.3)); border: 1px solid rgba(124,58,237,.45); color: var(--p-pu); }
+.chk-open { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+.task-txt-done { font-size: .84rem; color: var(--text-muted); text-decoration: line-through; }
+.task-txt-open { font-size: .84rem; color: var(--text-sub); }
+
+/* ── AI insight card ── */
+.ai-glow-card {
+  border-radius: 18px; padding: 26px;
+  background: linear-gradient(135deg,
+    rgba(109,40,217,.13) 0%,
+    rgba(37,99,235,.09) 50%,
+    rgba(219,39,119,.07) 100%);
+  border: 1px solid rgba(124,58,237,.28);
+  position: relative; overflow: hidden;
+  animation: aiPulse 4s ease-in-out infinite;
+}
+.ai-glow-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167,139,250,.4), rgba(96,165,250,.3), transparent);
+}
+.ai-glow-card::after {
+  content: ''; position: absolute; top: -80px; right: -80px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,58,237,.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+@keyframes aiPulse {
+  0%,100% { box-shadow: 0 0 28px rgba(109,40,217,.1); }
+  50%      { box-shadow: 0 0 50px rgba(109,40,217,.22), 0 0 80px rgba(37,99,235,.08); }
+}
+
+/* ── Badge pill (AI) ── */
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 13px; border-radius: 999px;
+  background: rgba(124,58,237,.14); border: 1px solid rgba(124,58,237,.32);
+  font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: #c4b5fd;
+}
+.ai-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; animation: bdot 2s ease-in-out infinite; }
+@keyframes bdot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.65)} }
+
+/* ── Chart card ── */
+.chart-wrap { position: relative; width: 100%; }
+
+/* ── Radar-style balance bars ── */
+.balance-row { display: flex; flex-direction: column; gap: 9px; }
+.balance-item { }
+.balance-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.balance-name { font-size: .75rem; color: var(--text-sub); font-weight: 500; }
+.balance-pct  { font-size: .72rem; font-weight: 700; }
+
+/* ── Scroll reveal ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+/* ── Responsive grids ── */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+
+@media (max-width: 1100px) {
+  .grid-4 { grid-template-columns: repeat(2,1fr); }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .ai-glow-card .ai-inner { flex-direction: column; }
+  .ai-balance { width: 100% !important; }
+}
+
+/* ── Tabs ── */
+.tab-btn {
+  padding: 7px 18px; border-radius: 9px; font-size: .8rem; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer; transition: all .2s; color: var(--text-sub);
+  background: none;
+}
+.tab-btn.active {
+  background: rgba(124,58,237,.18); border-color: rgba(124,58,237,.38); color: #c4b5fd;
+  box-shadow: 0 0 14px rgba(124,58,237,.18);
+}
+.tab-btn:not(.active):hover { background: rgba(255,255,255,.06); color: var(--text); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Mini calendar day labels ── */
+.cal-lbl { font-size: .58rem; color: var(--text-muted); text-align: center; font-weight: 600; letter-spacing:.04em; }
+
+{% endblock %}
+
+
+<!-- ═══════════════════════════════════════════════
+     PAGE CONTENT
+═══════════════════════════════════════════════ -->
+{% block content %}
+
+<!-- chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<div style="max-width:1200px;">
+
+<!-- ══════════════════════════════════════════════
+     1. PAGE HEADER
+══════════════════════════════════════════════ -->
+<div class="anim-up d-1" style="margin-bottom:28px;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+    <div>
+      <div class="ai-badge" style="margin-bottom:12px;">
+        <span class="ai-badge-dot"></span>AI Powered Insights
+      </div>
+      <h1 class="page-title">Your Progress 📈</h1>
+      <p class="page-subtitle">Track your growth, celebrate wins, and stay consistent on your learning journey.</p>
+    </div>
+    <!-- Quick actions -->
+    <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-ghost" style="font-size:.8rem;padding:8px 16px;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export Report
+      </button>
+      <a href="{% url 'skill_advisor' %}" class="btn-primary" style="font-size:.8rem;padding:8px 18px;text-decoration:none;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>
+        View Roadmap
+      </a>
+    </div>
+  </div>
+  <div class="glow-divider"></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     2. OVERVIEW STAT CARDS
+══════════════════════════════════════════════ -->
+<div class="grid-4 reveal" style="margin-bottom:22px;">
+
+  <!-- XP -->
+  <div class="p-stat anim-up d-1">
+    <div class="p-stat-icon" style="background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.24);">⚡</div>
+    <p class="p-stat-label">Total XP Earned</p>
+    <p class="p-stat-val">{{ user.total_xp|default:"14,280" }}</p>
+    <p class="p-stat-trend" style="color:var(--green);">▲ +340 this week</p>
+  </div>
+
+  <!-- Level -->
+  <div class="p-stat anim-up d-2">
+    <div class="p-stat-icon" style="background:rgba(37,99,235,.14);border:1px solid rgba(37,99,235,.24);">🎯</div>
+    <p class="p-stat-label">Current Level</p>
+    <p class="p-stat-val" style="background:linear-gradient(135deg,#fff 30%,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Lv 12</p>
+    <p class="p-stat-trend" style="color:var(--blue-hi);">▲ +2 levels this month</p>
+  </div>
+
+  <!-- Tasks -->
+  <div class="p-stat anim-up d-3">
+    <div class="p-stat-icon" style="background:rgba(16,185,129,.13);border:1px solid rgba(16,185,129,.24);">✅</div>
+    <p class="p-stat-label">Tasks Completed</p>
+    <p class="p-stat-val" style="background:linear-gradient(135deg,#fff 30%,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ user.tasks_done|default:"148" }}</p>
+    <p class="p-stat-trend" style="color:var(--green);">▲ +12 this week</p>
+  </div>
+
+  <!-- Consistency -->
+  <div class="p-stat anim-up d-4">
+    <div class="p-stat-icon" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.22);">🔥</div>
+    <p class="p-stat-label">Weekly Consistency</p>
+    <p class="p-stat-val" style="background:linear-gradient(135deg,#fff 30%,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ user.consistency|default:"86" }}%</p>
+    <p class="p-stat-trend" style="color:var(--amber);">▲ +8% vs last week</p>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     3. LEVEL XP BAR  (full width)
+══════════════════════════════════════════════ -->
+<div class="glass anim-up d-5 reveal" style="padding:22px 24px;border-radius:16px;margin-bottom:22px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--blue));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 18px rgba(124,58,237,.45);">⚡</div>
+      <div>
+        <p style="font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:var(--text);">Level 12 → Level 13</p>
+        <p style="font-size:.72rem;color:var(--text-muted);">160 XP remaining to level up</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:.78rem;color:var(--text-muted);">2,840</span>
+      <div style="width:180px;" class="xp-track"><div class="xp-fill" data-pct="94.6" style="width:0"></div></div>
+      <span style="font-size:.78rem;color:var(--violet-hi);font-weight:700;">3,000 XP</span>
+    </div>
+  </div>
+  <!-- Level milestone dots -->
+  <div style="display:flex;align-items:center;gap:4px;">
+    <span style="font-size:.62rem;color:var(--text-muted);margin-right:4px;">Lv 1</span>
+    {% for i in "123456789abc" %}
+    <div style="flex:1;height:3px;border-radius:2px;background:{% if forloop.counter <= 11 %}linear-gradient(90deg,var(--violet),var(--blue)){% else %}rgba(255,255,255,.07){% endif %};"></div>
+    {% endfor %}
+    <span style="font-size:.62rem;color:var(--violet-hi);font-weight:700;margin-left:4px;">Lv 13</span>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     4. CHART + SKILL BARS ROW
+══════════════════════════════════════════════ -->
+<div class="grid-2 reveal" style="margin-bottom:22px;align-items:start;">
+
+  <!-- XP Chart -->
+  <div class="glass anim-up d-1" style="padding:22px 24px;border-radius:16px;">
+    <!-- Tab selector -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+      <p class="sec-title" style="margin-bottom:0;flex:1;">📈 XP Activity</p>
+      <div style="display:flex;gap:5px;" id="chartTabs">
+        <button class="tab-btn active" data-range="week" onclick="switchChart('week',this)">Week</button>
+        <button class="tab-btn" data-range="month" onclick="switchChart('month',this)">Month</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:220px;">
+      <canvas id="xpChart"></canvas>
+    </div>
+    <!-- Summary row -->
+    <div style="display:flex;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid var(--rim);">
+      <div><p style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Peak Day</p><p style="font-size:.88rem;font-weight:700;color:var(--violet-hi);">Saturday · 540 XP</p></div>
+      <div><p style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Daily Avg</p><p style="font-size:.88rem;font-weight:700;color:var(--blue-hi);">337 XP</p></div>
+      <div><p style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Total Week</p><p style="font-size:.88rem;font-weight:700;color:#4ade80;">2,360 XP</p></div>
+    </div>
+  </div>
+
+  <!-- Skill Progress -->
+  <div class="glass anim-up d-2" style="padding:22px 24px;border-radius:16px;">
+    <p class="sec-title">🧠 Skill Mastery</p>
+
+    <div style="display:flex;flex-direction:column;gap:15px;" id="skillBars">
+
+      <!-- Skill row macro -->
+      <div class="skill-row">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="font-size:13px;">🌐</span>
+            <span style="font-size:.83rem;font-weight:500;color:var(--text);">HTML / CSS</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span class="pill pill-g">Expert</span>
+            <span style="font-size:.78rem;font-weight:700;color:#4ade80;">92%</span>
+          </div>
+        </div>
+        <div class="sk-track"><div class="sk-fill" data-pct="92" style="background:linear-gradient(90deg,#059669,#4ade80,#22d3ee);box-shadow:0 0 7px rgba(74,222,128,.3);"></div></div>
+      </div>
+
+      <div class="skill-row">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:13px;">🐍</span><span style="font-size:.83rem;font-weight:500;color:var(--text);">Python / Django</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><span class="pill pill-v">Advanced</span><span style="font-size:.78rem;font-weight:700;color:#c4b5fd;">75%</span></div>
+        </div>
+        <div class="sk-track"><div class="sk-fill" data-pct="75" style="background:linear-gradient(90deg,var(--violet),var(--p-pu));box-shadow:0 0 7px rgba(124,58,237,.35);"></div></div>
+      </div>
+
+      <div class="skill-row">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:13px;">⚛️</span><span style="font-size:.83rem;font-weight:500;color:var(--text);">JavaScript / React</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><span class="pill pill-b">Growing</span><span style="font-size:.78rem;font-weight:700;color:#93c5fd;">68%</span></div>
+        </div>
+        <div class="sk-track"><div class="sk-fill" data-pct="68" style="background:linear-gradient(90deg,#1d4ed8,var(--blue));box-shadow:0 0 7px rgba(59,130,246,.3);"></div></div>
+      </div>
+
+      <div class="skill-row">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:13px;">🧮</span><span style="font-size:.83rem;font-weight:500;color:var(--text);">Data Structures & Algo</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><span class="pill pill-a">Learning</span><span style="font-size:.78rem;font-weight:700;color:#fbbf24;">55%</span></div>
+        </div>
+        <div class="sk-track"><div class="sk-fill" data-pct="55" style="background:linear-gradient(90deg,#b45309,var(--amber));box-shadow:0 0 7px rgba(245,158,11,.3);"></div></div>
+      </div>
+
+      <div class="skill-row">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:13px;">🏗️</span><span style="font-size:.83rem;font-weight:500;color:var(--text);">System Design</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><span class="pill pill-pk">Beginner</span><span style="font-size:.78rem;font-weight:700;color:#f9a8d4;">32%</span></div>
+        </div>
+        <div class="sk-track"><div class="sk-fill" data-pct="32" style="background:linear-gradient(90deg,#9d174d,var(--pink));box-shadow:0 0 7px rgba(219,39,119,.3);"></div></div>
+      </div>
+
+      <div class="skill-row">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:13px;">🐳</span><span style="font-size:.83rem;font-weight:500;color:var(--text);">DevOps / Docker</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><span class="pill pill-r">New</span><span style="font-size:.78rem;font-weight:700;color:#67e8f9;">18%</span></div>
+        </div>
+        <div class="sk-track"><div class="sk-fill" data-pct="18" style="background:linear-gradient(90deg,#0e7490,var(--cyan));box-shadow:0 0 7px rgba(6,182,212,.3);"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     5. STREAK + TASKS + BADGES  (3-col)
+══════════════════════════════════════════════ -->
+<div class="grid-3 reveal" style="margin-bottom:22px;align-items:start;">
+
+  <!-- Streak tracker -->
+  <div class="glass anim-up d-1" style="padding:22px 24px;border-radius:16px;">
+    <p class="sec-title">🔥 Consistency Streak</p>
+
+    <!-- Big streak badge -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;border-radius:13px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);">
+      <div style="font-size:28px;">🔥</div>
+      <div>
+        <p style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;letter-spacing:-.05em;background:linear-gradient(135deg,#fbbf24,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;">{{ user.streak|default:"12" }} Days</p>
+        <p style="font-size:.7rem;color:var(--text-muted);font-weight:600;">Current streak · Personal best: 21d</p>
+      </div>
+    </div>
+
+    <!-- This week boxes -->
+    <p style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">This Week</p>
+    <div id="weekBoxes" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px;"></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;" id="weekLabels"></div>
+
+    <!-- 4-week heatmap -->
+    <p style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin:16px 0 8px;">Last 4 Weeks</p>
+    <div id="heatmap" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+
+    <!-- Stats row -->
+    <div style="display:flex;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--rim);">
+      <div style="flex:1;text-align:center;">
+        <p style="font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px;">Active Days</p>
+        <p style="font-size:1rem;font-weight:800;font-family:'Syne',sans-serif;color:#fbbf24;">19/28</p>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <p style="font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px;">Best Week</p>
+        <p style="font-size:1rem;font-weight:800;font-family:'Syne',sans-serif;color:#4ade80;">7/7</p>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <p style="font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px;">This Month</p>
+        <p style="font-size:1rem;font-weight:800;font-family:'Syne',sans-serif;color:#93c5fd;">86%</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent tasks -->
+  <div class="glass anim-up d-2" style="padding:22px 24px;border-radius:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <p class="sec-title" style="margin-bottom:0;flex:1;">📋 Recent Tasks</p>
+      <span class="pill pill-g" style="margin-left:8px;">4 done</span>
+    </div>
+
+    <!-- Tab: all / done / pending -->
+    <div style="display:flex;gap:5px;margin-bottom:14px;">
+      <button class="tab-btn active" style="padding:4px 12px;font-size:.72rem;" onclick="filterTasks('all',this)">All</button>
+      <button class="tab-btn" style="padding:4px 12px;font-size:.72rem;" onclick="filterTasks('done',this)">Done</button>
+      <button class="tab-btn" style="padding:4px 12px;font-size:.72rem;" onclick="filterTasks('open',this)">Pending</button>
+    </div>
+
+    <div id="taskList">
+      {% for task in recent_tasks %}
+      <div class="task-row" data-status="{% if task.done %}done{% else %}open{% endif %}">
+        <div class="task-chk {% if task.done %}chk-done{% else %}chk-open{% endif %}">{% if task.done %}✓{% endif %}</div>
+        <span class="{% if task.done %}task-txt-done{% else %}task-txt-open{% endif %}">{{ task.name }}</span>
+        {% if task.xp %}<span class="pill pill-v" style="margin-left:auto;font-size:.62rem;">+{{ task.xp }}xp</span>{% endif %}
+      </div>
+      {% empty %}
+      <div class="task-row" data-status="done"><div class="task-chk chk-done">✓</div><span class="task-txt-done">Completed JWT Authentication</span><span class="pill pill-v" style="margin-left:auto;font-size:.62rem;">+120xp</span></div>
+      <div class="task-row" data-status="done"><div class="task-chk chk-done">✓</div><span class="task-txt-done">Built REST API with Django</span><span class="pill pill-v" style="margin-left:auto;font-size:.62rem;">+200xp</span></div>
+      <div class="task-row" data-status="done"><div class="task-chk chk-done">✓</div><span class="task-txt-done">Deployed to Render.com</span><span class="pill pill-v" style="margin-left:auto;font-size:.62rem;">+160xp</span></div>
+      <div class="task-row" data-status="done"><div class="task-chk chk-done">✓</div><span class="task-txt-done">Implemented GitHub OAuth</span><span class="pill pill-v" style="margin-left:auto;font-size:.62rem;">+140xp</span></div>
+      <div class="task-row" data-status="open"><div class="task-chk chk-open"></div><span class="task-txt-open">Start Docker &amp; Containers</span><span class="pill pill-a" style="margin-left:auto;font-size:.62rem;">+180xp</span></div>
+      <div class="task-row" data-status="open"><div class="task-chk chk-open"></div><span class="task-txt-open">Learn Redis Caching</span><span class="pill pill-b" style="margin-left:auto;font-size:.62rem;">+150xp</span></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Badges + quick stats -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Badges -->
+    <div class="glass anim-up d-3" style="padding:22px 24px;border-radius:16px;">
+      <p class="sec-title">🏅 Earned Badges</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+        {% for b in earned_badges %}
+        <div title="{{ b.name }}" style="aspect-ratio:1;border-radius:11px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .2s,box-shadow .2s;cursor:default;" onmouseover="this.style.transform='scale(1.15)';this.style.boxShadow='0 0 14px rgba(124,58,237,.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''">{{ b.icon }}</div>
+        {% empty %}
+        {% for em in "🔥⚡🎯🏗️🐍🌐🏆💡" %}
+        <div style="aspect-ratio:1;border-radius:11px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .2s,box-shadow .2s;cursor:default;" onmouseover="this.style.transform='scale(1.15)';this.style.boxShadow='0 0 14px rgba(124,58,237,.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''">{{ em }}</div>
+        {% endfor %}
+        <!-- Locked badge -->
+        <div style="aspect-ratio:1;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.3;cursor:default;">🔒</div>
+        <div style="aspect-ratio:1;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.3;cursor:default;">🔒</div>
+        <div style="aspect-ratio:1;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.3;cursor:default;">🔒</div>
+        <div style="aspect-ratio:1;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.3;cursor:default;">🔒</div>
+        {% endfor %}
+      </div>
+      <p style="font-size:.68rem;color:var(--text-muted);margin-top:10px;text-align:center;">8 / 12 badges unlocked</p>
+    </div>
+
+    <!-- Quick rank card -->
+    <div class="glass anim-up d-4" style="padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(37,99,235,.1),rgba(109,40,217,.08));border-color:rgba(59,130,246,.22);">
+      <p class="sec-title" style="margin-bottom:14px;">🏆 Global Rank</p>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:#fff;box-shadow:0 0 20px rgba(124,58,237,.45);">#{{ user.rank|default:"142" }}</div>
+        <div>
+          <p style="font-size:.82rem;color:var(--text);font-weight:600;">Top 3% of learners</p>
+          <p style="font-size:.7rem;color:var(--text-muted);">Out of 50,000+ users</p>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:.7rem;color:var(--text-muted);">Rank progress</span><span style="font-size:.7rem;color:var(--blue-hi);font-weight:600;">#142 → #100</span></div>
+        <div class="sk-track" style="height:5px;"><div class="sk-fill" data-pct="71" style="background:linear-gradient(90deg,var(--violet),var(--blue));box-shadow:0 0 6px rgba(59,130,246,.3);"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     6. AI INSIGHTS CARD  (full width)
+══════════════════════════════════════════════ -->
+<div class="ai-glow-card reveal anim-up d-1" style="margin-bottom:0;">
+  <div class="ai-inner" style="display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap;">
+
+    <!-- Left: insight text -->
+    <div style="flex:1;min-width:260px;position:relative;z-index:1;">
+      <div class="ai-badge" style="margin-bottom:14px;">
+        <span class="ai-badge-dot"></span>AI Analysis · Updated just now
+      </div>
+      <h2 style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.2rem;letter-spacing:-.03em;margin-bottom:10px;line-height:1.35;color:var(--text);">
+        You're on fire in Backend Dev 🚀
+      </h2>
+      <p style="font-size:.85rem;color:var(--text-sub);line-height:1.75;margin-bottom:18px;">
+        Your Django and REST API skills are growing fast — top <strong style="color:#c4b5fd;">15% of learners</strong> at your level.
+        To unlock senior-level opportunities, AI recommends balancing your profile with
+        <strong style="color:#93c5fd;">System Design</strong> and <strong style="color:#f9a8d4;">DevOps</strong> next.
+      </p>
+
+      <!-- Insight chips -->
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px;">
+        <span class="pill pill-g">💪 Backend Strong</span>
+        <span class="pill pill-a">⚠️ System Design Gap</span>
+        <span class="pill pill-pk">📌 DevOps Needed</span>
+        <span class="pill pill-b">📈 Momentum High</span>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="{% url 'skill_advisor' %}" class="btn-primary" style="text-decoration:none;font-size:.82rem;padding:9px 18px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>
+          View Full Roadmap
+        </a>
+        <button class="btn-ghost" style="font-size:.82rem;padding:9px 16px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Regenerate
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: profile balance -->
+    <div class="ai-balance" style="width:220px;flex-shrink:0;position:relative;z-index:1;">
+      <p style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;">Profile Balance</p>
+      <div class="balance-row">
+        <div class="balance-item">
+          <div class="balance-head"><span class="balance-name">Frontend</span><span class="balance-pct" style="color:#4ade80;">92%</span></div>
+          <div class="sk-track" style="height:5px;"><div class="sk-fill" data-pct="92" style="background:linear-gradient(90deg,#059669,#4ade80);"></div></div>
+        </div>
+        <div class="balance-item">
+          <div class="balance-head"><span class="balance-name">Backend</span><span class="balance-pct" style="color:#c4b5fd;">75%</span></div>
+          <div class="sk-track" style="height:5px;"><div class="sk-fill" data-pct="75" style="background:linear-gradient(90deg,var(--violet),var(--p-pu));"></div></div>
+        </div>
+        <div class="balance-item">
+          <div class="balance-head"><span class="balance-name">Algorithms</span><span class="balance-pct" style="color:#fbbf24;">55%</span></div>
+          <div class="sk-track" style="height:5px;"><div class="sk-fill" data-pct="55" style="background:linear-gradient(90deg,#b45309,var(--amber));"></div></div>
+        </div>
+        <div class="balance-item">
+          <div class="balance-head"><span class="balance-name">System Design</span><span class="balance-pct" style="color:#f9a8d4;">32%</span></div>
+          <div class="sk-track" style="height:5px;"><div class="sk-fill" data-pct="32" style="background:linear-gradient(90deg,#9d174d,var(--pink));"></div></div>
+        </div>
+        <div class="balance-item">
+          <div class="balance-head"><span class="balance-name">DevOps</span><span class="balance-pct" style="color:#67e8f9;">18%</span></div>
+          <div class="sk-track" style="height:5px;"><div class="sk-fill" data-pct="18" style="background:linear-gradient(90deg,#0e7490,var(--cyan));"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /max-width wrapper -->
+{% endblock %}
+
+
+<!-- ═══════════════════════════════════════════════
+     EXTRA SCRIPTS
+═══════════════════════════════════════════════ -->
+{% block extra_scripts %}
+<script>
+(function(){
+'use strict';
+
+/* ── 1. Scroll reveal ─────────────────────────── */
+var revObs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); revObs.unobserve(e.target); }});
+},{threshold:0.06});
+document.querySelectorAll('.reveal').forEach(function(el){ revObs.observe(el); });
+
+/* ── 2. Animate all sk-fill + xp-fill bars ────── */
+function animateBars(){
+  document.querySelectorAll('.sk-fill[data-pct], .xp-fill[data-pct]').forEach(function(bar){
+    var pct = bar.getAttribute('data-pct') || '0';
+    setTimeout(function(){ bar.style.width = pct + '%'; }, 300);
+  });
+}
+/* Trigger via base.html's DOMContentLoaded handler AND our own */
+window.addEventListener('DOMContentLoaded', animateBars);
+/* Also trigger when reveal fires (for bars below fold) */
+revObs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      e.target.querySelectorAll('.sk-fill[data-pct],.xp-fill[data-pct]').forEach(function(bar){
+        var pct = bar.getAttribute('data-pct') || '0';
+        setTimeout(function(){ bar.style.width = pct + '%'; }, 150);
+      });
+      revObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.06});
+document.querySelectorAll('.reveal').forEach(function(el){ revObs.observe(el); });
+
+/* ── 3. XP Chart (Chart.js) ───────────────────── */
+var weekData  = [180,340,220,490,310,540,280];
+var monthData = [1200,980,1540,1100,1360,1680,1240,900,1480,1100,1320,1560,1240,1020,1380,1100,1460,1280,960,1520,1100,1340,1600,1180,980,1440,1100,1360,1680,1020];
+var weekLabels  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var monthLabels = Array.from({length:30},function(_,i){ return 'D'+(i+1); });
+
+var chartInst = null;
+
+function buildChart(range){
+  var ctx = document.getElementById('xpChart');
+  if(!ctx) return;
+  var c2d = ctx.getContext('2d');
+  var grad = c2d.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(124,58,237,0.35)');
+  grad.addColorStop(1,'rgba(124,58,237,0.00)');
+
+  var labels = range === 'week' ? weekLabels : monthLabels;
+  var data   = range === 'week' ? weekData   : monthData;
+
+  if(chartInst){ chartInst.destroy(); }
+
+  chartInst = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels: labels,
+      datasets:[{
+        label:'XP',
+        data: data,
+        fill:true,
+        backgroundColor: grad,
+        borderColor:'#7c3aed',
+        borderWidth:2.2,
+        tension:0.45,
+        pointBackgroundColor:'#7c3aed',
+        pointBorderColor:'#06060f',
+        pointBorderWidth:2,
+        pointRadius: range==='week' ? 5 : 2,
+        pointHoverRadius: range==='week' ? 7 : 5,
+        pointHoverBackgroundColor:'#ec4899',
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(6,6,15,0.95)',
+          borderColor:'rgba(124,58,237,0.4)',
+          borderWidth:1,
+          titleColor:'#ededfc',
+          bodyColor:'#a78bfa',
+          padding:11,
+          cornerRadius:10,
+          displayColors:false,
+          callbacks:{ label:function(ctx){ return '⚡ '+ctx.parsed.y+' XP'; }}
+        }
+      },
+      scales:{
+        x:{
+          grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},
+          ticks:{color:'rgba(237,237,252,0.28)',font:{family:'Plus Jakarta Sans',size:11}, maxTicksLimit: range==='week'?7:10},
+          border:{display:false}
+        },
+        y:{
+          grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},
+          ticks:{color:'rgba(237,237,252,0.28)',font:{family:'Plus Jakarta Sans',size:11}},
+          border:{display:false}
+        }
+      },
+      animation:{duration:900,easing:'easeInOutQuart'}
+    }
+  });
+}
+
+/* ── 4. Chart tab switch ──────────────────────── */
+window.switchChart = function(range, btn){
+  document.querySelectorAll('#chartTabs .tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  buildChart(range);
+};
+
+/* ── 5. Task filter tabs ─────────────────────── */
+window.filterTasks = function(filter, btn){
+  document.querySelectorAll('[onclick^="filterTasks"] .tab-btn, button[onclick^="filterTasks"]').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('#taskList .task-row').forEach(function(row){
+    if(filter==='all') row.style.display='';
+    else row.style.display = row.getAttribute('data-status')===filter ? '' : 'none';
+  });
+};
+
+/* ── 6. Streak week boxes ────────────────────── */
+function buildWeek(){
+  var days   = ['M','T','W','T','F','S','S'];
+  var active = [true,true,true,true,true,false,false];
+  var bw = document.getElementById('weekBoxes');
+  var bl = document.getElementById('weekLabels');
+  if(!bw) return;
+  days.forEach(function(d,i){
+    var box = document.createElement('div');
+    box.style.cssText = 'border-radius:8px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:transform .18s;cursor:default;';
+    if(active[i]){
+      box.style.background='linear-gradient(135deg,#7c3aed,#a855f7)';
+      box.style.boxShadow='0 0 10px rgba(124,58,237,.4)';
+      box.textContent='🔥';
+    } else {
+      box.style.background='rgba(255,255,255,.04)';
+      box.style.border='1px solid rgba(255,255,255,.07)';
+    }
+    box.addEventListener('mouseover',function(){ this.style.transform='scale(1.12)'; });
+    box.addEventListener('mouseout', function(){ this.style.transform=''; });
+    bw.appendChild(box);
+
+    var lbl = document.createElement('div');
+    lbl.className='cal-lbl';
+    lbl.textContent=d;
+    bl.appendChild(lbl);
+  });
+}
+
+/* ── 7. 28-day heatmap ───────────────────────── */
+function buildHeatmap(){
+  var hm = document.getElementById('heatmap');
+  if(!hm) return;
+  var intensities=[.9,.7,0,.85,.95,.6,0, .85,0,.75,.9,.55,0,.8, 0,.65,.92,0,.72,.87,.42, .78,.9,.52,0,.62,0,0];
+  intensities.forEach(function(v){
+    var cell=document.createElement('div');
+    cell.className='streak-cell';
+    if(v>0){
+      var alpha=Math.max(0.15,v);
+      cell.style.background='rgba(124,58,237,'+alpha+')';
+      cell.style.boxShadow='0 0 5px rgba(124,58,237,'+(alpha*.5)+')';
+    } else {
+      cell.style.background='rgba(255,255,255,0.05)';
+      cell.style.border='1px solid rgba(255,255,255,0.06)';
+    }
+    hm.appendChild(cell);
+  });
+}
+
+/* ── 8. Init ─────────────────────────────────── */
+window.addEventListener('DOMContentLoaded',function(){
+  buildWeek();
+  buildHeatmap();
+  buildChart('week');
+  /* Trigger bars immediately for above-fold content */
+  animateBars();
+});
+
+})();
+</script>
+{% endblock %}
