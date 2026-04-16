@@ -7,8 +7,9 @@ from . import views
 urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('roadmap/', views.roadmap_view, name='roadmap'),
-    path('progress/', views.progress_view, name='progress'),
+    path('progress/', views.progress_dashboard, name='progress'),
     path('settings/', views.settings_view, name='settings'),
     path('skill-advisor/', views.skill_advisor, name='skill_advisor'),
+    path('roadmap/<int:roadmap_id>/', views.roadmap_detail, name='roadmap_detail')
 
 ]

@@ -8,6 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
+    <!-- html2canvas + jsPDF for client-side download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         :root {
             --navy-deep:   #020b1a;
@@ -38,7 +42,6 @@
             overflow-x: hidden;
         }
 
-        /* Radial background glow matching screenshot */
         body::before {
             content: '';
             position: fixed;
@@ -52,7 +55,6 @@
             z-index: 0;
         }
 
-        /* Subtle grid */
         body::after {
             content: '';
             position: fixed;
@@ -72,7 +74,6 @@
             border-radius: 10px;
         }
 
-        /* Scroll progress */
         .scroll-bar {
             position: fixed;
             top: 0; left: 0;
@@ -92,7 +93,7 @@
             flex-direction: column;
         }
 
-        /* TOPBAR */
+        /* ── TOPBAR ── */
         .topbar {
             position: sticky;
             top: 0;
@@ -102,8 +103,8 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 clamp(1rem, 4vw, 2.5rem);
-            gap: 1rem;
-            background: rgba(4, 15, 34, 0.82);
+            gap: 0.75rem;
+            background: rgba(4, 15, 34, 0.88);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(0, 180, 255, 0.12);
@@ -139,6 +140,7 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 13px; font-weight: 800; color: #fff;
             box-shadow: 0 0 12px rgba(0,212,255,0.4);
+            flex-shrink: 0;
         }
 
         .brand-text {
@@ -152,18 +154,25 @@
         .topbar-center {
             flex: 1;
             text-align: center;
-            font-size: clamp(12px, 2vw, 14px);
+            font-size: clamp(11px, 1.8vw, 14px);
             color: var(--text-secondary);
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: 0 0.5rem;
+            padding: 0 0.25rem;
         }
         .topbar-center b { color: var(--cyan); }
 
-        .back-btn {
+        /* Topbar action group */
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             flex-shrink: 0;
+        }
+
+        .back-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -177,6 +186,7 @@
             text-decoration: none;
             transition: all 0.2s;
             white-space: nowrap;
+            cursor: pointer;
         }
         .back-btn:hover {
             background: rgba(0,180,255,0.18);
@@ -184,9 +194,136 @@
             color: var(--cyan);
             box-shadow: 0 0 14px rgba(0,212,255,0.2);
         }
-        .back-btn svg { width: 13px; height: 13px; }
+        .back-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-        /* HERO */
+        /* Download dropdown */
+        .dl-wrapper {
+            position: relative;
+        }
+
+        .dl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,212,255,0.4);
+            background: linear-gradient(135deg, rgba(0,100,200,0.25), rgba(0,180,255,0.12));
+            color: var(--cyan);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .dl-btn:hover {
+            background: linear-gradient(135deg, rgba(0,150,230,0.35), rgba(0,212,255,0.2));
+            border-color: var(--cyan);
+            box-shadow: 0 0 18px rgba(0,212,255,0.3);
+        }
+        .dl-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+        .dl-btn .caret { width: 10px; height: 10px; transition: transform 0.2s; }
+        .dl-btn.open .caret { transform: rotate(180deg); }
+
+        .dl-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 180px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,180,255,0.22);
+            background: rgba(6, 18, 38, 0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 12px 40px rgba(0,30,80,0.6), 0 0 0 1px rgba(0,180,255,0.08);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-6px) scale(0.97);
+            pointer-events: none;
+            transition: opacity 0.18s, transform 0.18s;
+            z-index: 999;
+        }
+        .dl-menu.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+
+        .dl-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .dl-menu-item:hover {
+            background: rgba(0,180,255,0.1);
+            color: var(--cyan);
+        }
+        .dl-menu-item + .dl-menu-item {
+            border-top: 1px solid rgba(0,180,255,0.08);
+        }
+        .dl-menu-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .dl-menu-item .tag {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(0,180,255,0.12);
+            color: var(--cyan-dim);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            background: rgba(6, 20, 44, 0.97);
+            border: 1px solid rgba(0,212,255,0.35);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: 0 8px 32px rgba(0,30,80,0.5), 0 0 0 1px rgba(0,180,255,0.1);
+            backdrop-filter: blur(16px);
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast-icon { color: var(--cyan); font-size: 16px; }
+        .toast-spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(0,212,255,0.25);
+            border-top-color: var(--cyan);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── HERO ── */
         .hero {
             padding: clamp(2.5rem, 7vw, 5rem) clamp(1rem, 4vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem);
             text-align: center;
@@ -241,7 +378,7 @@
             line-height: 1.7;
         }
 
-        /* CHIPS */
+        /* ── CHIPS ── */
         .chips {
             display: flex;
             justify-content: center;
@@ -262,9 +399,9 @@
             font-weight: 600;
             color: var(--text-secondary);
         }
-        .chip-dot { width: 7px; height: 7px; border-radius: 50%; }
+        .chip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-        /* CONTENT */
+        /* ── CONTENT ── */
         .content-area {
             flex: 1;
             padding: 0 clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
@@ -306,6 +443,7 @@
             background: rgba(0,180,255,0.1);
             border: 1px solid rgba(0,180,255,0.25);
             display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
 
         .card-label {
@@ -316,7 +454,7 @@
             color: var(--cyan-dim);
         }
 
-        /* PROSE */
+        /* ── PROSE ── */
         .prose-wrap {
             padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2rem);
         }
@@ -383,7 +521,7 @@
             font-style: normal;
         }
 
-        .prose-wrap.prose table { width: 100%; border-collapse: collapse; }
+        .prose-wrap.prose table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
 
         .prose-wrap.prose thead th {
             background: rgba(0,100,200,0.2);
@@ -405,7 +543,7 @@
         .prose-wrap.prose tbody tr:hover td { background: rgba(0,180,255,0.04); }
         .prose-wrap.prose hr { border-color: rgba(0,180,255,0.1); margin: 2rem 0; }
 
-        /* FOOTER */
+        /* ── FOOTER ── */
         footer {
             padding: 1.5rem clamp(1rem, 4vw, 2.5rem);
             border-top: 1px solid rgba(0,180,255,0.08);
@@ -419,21 +557,37 @@
         .footer-left b { color: var(--cyan-dim); font-weight: 700; }
         .footer-right { font-size: 12px; color: var(--text-muted); }
 
-        /* RESPONSIVE */
-        @media (max-width: 640px) {
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
             .topbar-center { display: none; }
-            .back-btn span { display: none; }
+        }
+
+        @media (max-width: 500px) {
+            .back-btn .btn-label { display: none; }
             .back-btn { padding: 6px 10px; }
+            .dl-btn .btn-label { display: none; }
+            .dl-btn { padding: 6px 10px; }
             .chips { gap: 7px; }
             .chip { font-size: 11px; padding: 6px 11px; }
             .roadmap-card { border-radius: 12px; }
             footer { justify-content: center; text-align: center; }
+        }
+
+        @media (max-width: 360px) {
+            .topbar-actions { gap: 5px; }
+            .dl-menu { right: -10px; }
         }
     </style>
 </head>
 <body>
 
     <div class="scroll-bar" id="scrollBar"></div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">⬇</span>
+        <span id="toastMsg">Preparing download…</span>
+    </div>
 
     <div class="page">
 
@@ -447,61 +601,103 @@
                 Roadmap for <b>{{ data.user_skill }}</b>
             </div>
 
-            <a href="{% url 'skill_advisor' %}" class="back-btn">
-                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>New Roadmap</span>
-            </a>
+            <div class="topbar-actions">
+
+                <!-- Download dropdown -->
+                <div class="dl-wrapper">
+                    <button class="dl-btn" id="dlBtn" aria-haspopup="true" aria-expanded="false">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 1v9M5 7l3 3 3-3M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="btn-label">Download</span>
+                        <svg class="caret" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+
+                    <div class="dl-menu" id="dlMenu" role="menu">
+                        <button class="dl-menu-item" id="dlPdf" role="menuitem">
+                            <svg viewBox="0 0 16 16" fill="none">
+                                <rect x="2" y="1" width="10" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            </svg>
+                            Save as PDF
+                            <span class="tag">PDF</span>
+                        </button>
+                        <button class="dl-menu-item" id="dlJpg" role="menuitem">
+                            <svg viewBox="0 0 16 16" fill="none">
+                                <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="5.5" cy="6" r="1.2" fill="currentColor"/>
+                                <path d="M1.5 12.5l4-4.5 3 3 2.5-2.5 3.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Save as Image
+                            <span class="tag">JPG</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Back button -->
+                <a href="{% url 'skill_advisor' %}" class="back-btn">
+                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="btn-label">New Roadmap</span>
+                </a>
+            </div>
         </header>
 
-        <section class="hero">
-            <div class="hero-badge">AI-Powered Roadmap</div>
-            <h1 class="hero-title">{{ data.user_skill }}</h1>
-            <p class="hero-sub">Your personalized learning path, curated by AI to take you from beginner to expert.</p>
-        </section>
+        <!-- Capture zone: everything below header -->
+        <div id="captureZone">
 
-        <div class="chips">
-            <div class="chip">
-                <div class="chip-dot" style="background:var(--cyan); box-shadow:0 0 6px var(--cyan);"></div>
-                Structured Path
-            </div>
-            <div class="chip">
-                <div class="chip-dot" style="background:#56cfff; box-shadow:0 0 6px #56cfff;"></div>
-                Step-by-Step
-            </div>
-            <div class="chip">
-                <div class="chip-dot" style="background:var(--blue-bright); box-shadow:0 0 6px var(--blue-bright);"></div>
-                AI Curated
-            </div>
-            <div class="chip">
-                <div class="chip-dot" style="background:#00e0a0; box-shadow:0 0 6px #00e0a0;"></div>
-                Beginner Friendly
-            </div>
-        </div>
+            <section class="hero">
+                <div class="hero-badge">AI-Powered Roadmap</div>
+                <h1 class="hero-title">{{ data.user_skill }}</h1>
+                <p class="hero-sub">Your personalized learning path, curated by AI to take you from beginner to expert.</p>
+            </section>
 
-        <main class="content-area">
-            <div class="roadmap-card">
+            <div class="chips">
+                <div class="chip">
+                    <div class="chip-dot" style="background:var(--cyan); box-shadow:0 0 6px var(--cyan);"></div>
+                    Structured Path
+                </div>
+                <div class="chip">
+                    <div class="chip-dot" style="background:#56cfff; box-shadow:0 0 6px #56cfff;"></div>
+                    Step-by-Step
+                </div>
+                <div class="chip">
+                    <div class="chip-dot" style="background:var(--blue-bright); box-shadow:0 0 6px var(--blue-bright);"></div>
+                    AI Curated
+                </div>
+                <div class="chip">
+                    <div class="chip-dot" style="background:#00e0a0; box-shadow:0 0 6px #00e0a0;"></div>
+                    Beginner Friendly
+                </div>
+            </div>
 
-                <div class="card-header">
-                    <div class="card-icon">
-                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 1L10.09 5.26L14.73 5.95L11.365 9.24L12.18 13.87L8 11.67L3.82 13.87L4.635 9.24L1.27 5.95L5.91 5.26L8 1Z" fill="#00d4ff"/>
-                        </svg>
+            <main class="content-area">
+                <div class="roadmap-card" id="roadmapCard">
+
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 1L10.09 5.26L14.73 5.95L11.365 9.24L12.18 13.87L8 11.67L3.82 13.87L4.635 9.24L1.27 5.95L5.91 5.26L8 1Z" fill="#00d4ff"/>
+                            </svg>
+                        </div>
+                        <span class="card-label">Your Roadmap</span>
                     </div>
-                    <span class="card-label">Your Roadmap</span>
-                </div>
 
-                <div class="prose-wrap prose prose-invert prose-lg max-w-none">
-                    {{ data.recommendation|safe }}
-                </div>
+                    <div class="prose-wrap prose prose-invert prose-lg max-w-none">
+                        {{ data.recommendation|safe }}
+                    </div>
 
-            </div>
-        </main>
+                </div>
+            </main>
+
+        </div><!-- /captureZone -->
 
         <footer>
             <div class="footer-left">
-                Generated by <b>SkillSync-AI</b> &mdash; Powered by Claude
+                Generated by <b>SkillSync-AI</b> &mdash; Powered by Team 13 (APK)
             </div>
             <div class="footer-right">Personalized learning paths for every skill</div>
         </footer>
@@ -509,11 +705,114 @@
     </div>
 
     <script>
+        /* ── Scroll progress ── */
         const bar = document.getElementById('scrollBar');
         window.addEventListener('scroll', () => {
             const h = document.documentElement.scrollHeight - window.innerHeight;
             bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
         }, { passive: true });
+
+        /* ── Dropdown toggle ── */
+        const dlBtn  = document.getElementById('dlBtn');
+        const dlMenu = document.getElementById('dlMenu');
+
+        dlBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = dlMenu.classList.toggle('open');
+            dlBtn.classList.toggle('open', open);
+            dlBtn.setAttribute('aria-expanded', open);
+        });
+
+        document.addEventListener('click', () => {
+            dlMenu.classList.remove('open');
+            dlBtn.classList.remove('open');
+            dlBtn.setAttribute('aria-expanded', false);
+        });
+
+        dlMenu.addEventListener('click', e => e.stopPropagation());
+
+        /* ── Toast helper ── */
+        const toast    = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
+        let toastTimer;
+
+        function showToast(msg, spinner = false, done = false) {
+            clearTimeout(toastTimer);
+            toastMsg.textContent = msg;
+            toastIcon.innerHTML  = spinner
+                ? '<div class="toast-spinner"></div>'
+                : done ? '✓' : '⬇';
+            toast.classList.add('show');
+            if (!spinner) {
+                toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        }
+
+        function hideToast() { toast.classList.remove('show'); }
+
+        /* ── Shared canvas capture ── */
+        async function captureCanvas() {
+            const el = document.getElementById('captureZone');
+            return await html2canvas(el, {
+                backgroundColor: '#020b1a',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                scrollY: 0,
+                windowWidth: el.scrollWidth,
+                windowHeight: el.scrollHeight,
+            });
+        }
+
+        /* ── Download as PDF ── */
+        document.getElementById('dlPdf').addEventListener('click', async () => {
+            dlMenu.classList.remove('open');
+            dlBtn.classList.remove('open');
+            showToast('Generating PDF…', true);
+            try {
+                const canvas = await captureCanvas();
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+                const { jsPDF } = window.jspdf;
+                const pdfW = 210; // A4 mm
+                const pxRatio = pdfW / canvas.width;
+                const pdfH = canvas.height * pxRatio;
+
+                const pdf = new jsPDF({
+                    orientation: pdfH > pdfW ? 'portrait' : 'landscape',
+                    unit: 'mm',
+                    format: [pdfW, pdfH],
+                });
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+                const skillName = (document.querySelector('.hero-title')?.textContent || 'roadmap').trim().replace(/\s+/g, '_').toLowerCase();
+                pdf.save(`skillsync_${skillName}_roadmap.pdf`);
+                showToast('PDF downloaded!', false, true);
+            } catch (err) {
+                console.error(err);
+                showToast('PDF failed. Try again.', false, false);
+            }
+        });
+
+        /* ── Download as JPG ── */
+        document.getElementById('dlJpg').addEventListener('click', async () => {
+            dlMenu.classList.remove('open');
+            dlBtn.classList.remove('open');
+            showToast('Generating image…', true);
+            try {
+                const canvas = await captureCanvas();
+                const link = document.createElement('a');
+                const skillName = (document.querySelector('.hero-title')?.textContent || 'roadmap').trim().replace(/\s+/g, '_').toLowerCase();
+                link.download = `skillsync_${skillName}_roadmap.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                showToast('Image downloaded!', false, true);
+            } catch (err) {
+                console.error(err);
+                showToast('Image failed. Try again.', false, false);
+            }
+        });
     </script>
 
 </body>
