@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from google import genai
+#from import Groq
 import markdown
 from django.shortcuts import get_object_or_404
 
@@ -70,39 +71,54 @@ def settings_view(request):
 def skill_advisor(request):
     if request.method == "POST":
         skill = request.POST.get('skill')
-        prompt = f"Give me a detailed roadmap for {skill} for a beginner."
+
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        
+        # 🔥 SMART PROMPT: AI ko text aur table dono use karne ka instruction
+        prompt = f"""
+        Act as an expert mentor. Give me a detailed, step-by-step roadmap to learn {skill} for a complete beginner. 
+        
+        Please structure your response intelligently:
+        1. Use clear text paragraphs and bullet points for explanations, tips, and theory.
+        2. MUST include a Markdown Table to summarize the timeline, topics, or resources (e.g., Week | Topic | Resources).
+        
+        Keep the formatting clean and engaging.
+        """
 
         try:
-            # 1. Gemini API Call
+            # 1. Gemini se data mangwana
             response = client.models.generate_content(
-                model="gemini-2.5-flash", 
+                model="gemini-2.5-flash",
                 contents=prompt
             )
             ai_text = response.text
-            html_content = markdown.markdown(ai_text) 
 
-            # 2. Purani table mein save (AIQuery)
+            # 2. Markdown ko HTML mein convert karna (Text ko paragraph, Table ko <table> banayega)
+            html_content = markdown.markdown(ai_text, extensions=['tables', 'fenced_code'])
+
+            # 3. AIQuery table mein save karna (Aapka purana DB)
             query_obj = AIQuery.objects.create(
                 user_skill=skill, 
                 recommendation=html_content
             )
 
-            # 3. 🔥 NAYA CODE: Progress Page ke liye Save karein 🔥
-            # Isse aapka Progress page ka "Saved AI Roadmaps" wala card bhar jayega
+            # 4. SavedAIRoadmap table mein save karna (Progress Page ke liye)
             SavedAIRoadmap.objects.create(
                 user=request.user,
                 title=f"{skill.capitalize()} Roadmap", 
                 ai_content=html_content
             )
             
+            # 5. Result page par final HTML bhejna
             return render(request, 'dashboard/result.html', {'data': query_obj})
 
         except Exception as e:
+            # Agar koi API ya DB error aaye toh crash hone ke bajaye error.html par bhejna
             print(f"MAIN ERROR YE HAI: {e}") 
             return render(request, 'dashboard/error.html', {'error': str(e)})
 
+    # Agar request GET hai (page normal khula hai form fill karne ke liye)
     return render(request, 'dashboard/roadmap.html')
-
 
 # -------------------------------------------------------------------
 # 5. Progress Dashboard (Main UI View)
@@ -149,4 +165,49 @@ def roadmap_detail(request, roadmap_id):
     }
     return render(request, 'dashboard/roadmap_detail.html', context)
 
+
+#-----------------------------------------------------------------#
+#---GROQ INTEGRATION FOR AI ADVISOR (ALTERNATIVE TO GEMINI)---
+
+# client = Groq(
+#     api_key=os.environ.get("GROQ_API_KEY"),
+# )
+
+# @login_required
+# def ask_groq_advisor(request):
+#     # Ye hum testing ke liye hardcode kar rahe hain, baad mein form se lenge
+#     user_prompt = "Give me a 3-step short roadmap to learn Cyber Security for web apps."
+    
+#     try:
+#         # Groq ke server ko request bhej rahe hain
+#         completion = client.chat.completions.create(
+#             # Yahan Llama-3 ka 70 Billion parameter wala model use kar rahe hain
+#             model="llama3-70b-8192", 
+#             messages=[
+#                 {
+#                     "role": "system",
+#                     "content": "You are a highly skilled mentor. Provide technical advice in clean markdown format."
+#                 },
+#                 {
+#                     "role": "user",
+#                     "content": user_prompt
+#                 }
+#             ],
+#             temperature=0.7, # Creativty level (0 se 1 ke beech)
+#             max_tokens=1024, # Maximum lamba jawab kitna ho sakta hai
+#         )
+        
+#         # Exact markdown text nikalna
+#         ai_reply = completion.choices[0].message.content
+        
+#     except Exception as e:
+#         ai_reply = f"System Error: {str(e)}"
+        
+#     context = {
+#         'roadmap_content': ai_reply,
+#         'title': 'Cyber Security Path (Powered by Groq)'
+#     }
+    
+#     # Aap isko apne usi purane roadmap_detail.html (ya result.html) par bhej sakte ho
+#     return render(request, 'dashboard/result.html', context)
 

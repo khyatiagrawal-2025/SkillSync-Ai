@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
-    <!-- html2canvas + jsPDF for client-side download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -324,9 +323,20 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ── HERO ── */
+        /* ── HERO ── */
         .hero {
-            padding: clamp(2.5rem, 7vw, 5rem) clamp(1rem, 4vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem);
+            padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 4vw, 2.5rem);
             text-align: center;
+            
+            /* 👇 NAYA BACKGROUND COLOR & GLASS EFFECT 👇 */
+            background: rgba(6, 20, 40, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 180, 255, 0.15);
+            border-radius: 20px;
+            max-width: 920px;
+            margin: 2rem auto 1.5rem auto;
+            box-shadow: 0 15px 40px rgba(0, 50, 120, 0.3), inset 0 1px 0 rgba(0, 180, 255, 0.1);
         }
 
         .hero-badge {
@@ -454,12 +464,17 @@
             color: var(--cyan-dim);
         }
 
-        /* ── PROSE ── */
+        /* ── PROSE (TEXT & LIST ALIGNMENT FIXES) ── */
         .prose-wrap {
             padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2rem);
         }
 
-        .prose-wrap.prose :is(h1,h2,h3,h4) { color: #cceeff !important; font-weight: 700; }
+        /* FORCE left alignment inside AI content */
+        .prose-wrap.prose {
+            text-align: left !important;
+        }
+
+        .prose-wrap.prose :is(h1,h2,h3,h4) { color: #cceeff !important; font-weight: 700; text-align: left !important; }
 
         .prose-wrap.prose h2 {
             display: flex;
@@ -483,10 +498,31 @@
         .prose-wrap.prose h3 { color: #a8d8ff !important; font-size: clamp(1rem, 2.5vw, 1.15rem) !important; }
         .prose-wrap.prose h3::before { content: '▸ '; color: var(--cyan); }
 
-        .prose-wrap.prose p { color: #7ab3d4; line-height: 1.8; font-size: clamp(14px, 2vw, 15px); }
+        .prose-wrap.prose p { color: #7ab3d4; line-height: 1.8; font-size: clamp(14px, 2vw, 15px); text-align: left !important; }
 
-        .prose-wrap.prose ul > li,
-        .prose-wrap.prose ol > li { color: #6a9fc0; font-size: clamp(13px, 2vw, 15px); line-height: 1.75; }
+        /* 🔥 FIX FOR LISTS: Tailwind resets bullets, this brings them back properly indented 🔥 */
+        .prose-wrap.prose ul {
+            list-style-type: disc !important;
+            padding-left: 1.5rem !important;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .prose-wrap.prose ol {
+            list-style-type: decimal !important;
+            padding-left: 1.5rem !important;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .prose-wrap.prose li { 
+            display: list-item !important; 
+            text-align: left !important; 
+            margin-bottom: 0.5rem !important;
+            color: #6a9fc0; 
+            font-size: clamp(13px, 2vw, 15px); 
+            line-height: 1.75; 
+        }
 
         .prose-wrap.prose ul > li::marker { color: var(--cyan); }
         .prose-wrap.prose ol > li::marker { color: var(--blue-bright); font-weight: 700; }
@@ -510,6 +546,7 @@
             border: 1px solid rgba(0,180,255,0.18) !important;
             border-radius: 12px !important;
             box-shadow: inset 0 0 20px rgba(0,50,100,0.3);
+            text-align: left !important;
         }
 
         .prose-wrap.prose blockquote {
@@ -521,7 +558,7 @@
             font-style: normal;
         }
 
-        .prose-wrap.prose table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+        .prose-wrap.prose table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; text-align: left !important; }
 
         .prose-wrap.prose thead th {
             background: rgba(0,100,200,0.2);
@@ -577,13 +614,22 @@
             .topbar-actions { gap: 5px; }
             .dl-menu { right: -10px; }
         }
+
+        /* ── EXPORT FIX FOR HTML2CANVAS ── */
+                .export-mode .hero-title {
+            background: none !important;
+            background-clip: initial !important;
+            -webkit-background-clip: initial !important;
+            -webkit-text-fill-color: initial !important;
+            color: #56cfff !important;
+        }
+        
     </style>
 </head>
 <body>
 
     <div class="scroll-bar" id="scrollBar"></div>
 
-    <!-- Toast notification -->
     <div class="toast" id="toast">
         <span class="toast-icon" id="toastIcon">⬇</span>
         <span id="toastMsg">Preparing download…</span>
@@ -603,7 +649,6 @@
 
             <div class="topbar-actions">
 
-                <!-- Download dropdown -->
                 <div class="dl-wrapper">
                     <button class="dl-btn" id="dlBtn" aria-haspopup="true" aria-expanded="false">
                         <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -636,7 +681,6 @@
                     </div>
                 </div>
 
-                <!-- Back button -->
                 <a href="{% url 'skill_advisor' %}" class="back-btn">
                     <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -646,7 +690,6 @@
             </div>
         </header>
 
-        <!-- Capture zone: everything below header -->
         <div id="captureZone">
 
             <section class="hero">
@@ -693,9 +736,7 @@
                 </div>
             </main>
 
-        </div><!-- /captureZone -->
-
-        <footer>
+        </div><footer>
             <div class="footer-left">
                 Generated by <b>SkillSync-AI</b> &mdash; Powered by Team 13 (APK)
             </div>
@@ -754,7 +795,11 @@
         /* ── Shared canvas capture ── */
         async function captureCanvas() {
             const el = document.getElementById('captureZone');
-            return await html2canvas(el, {
+            
+            // FIX: Add export class before capturing to remove gradient issue
+            el.classList.add('export-mode');
+
+            const canvas = await html2canvas(el, {
                 backgroundColor: '#020b1a',
                 scale: 2,
                 useCORS: true,
@@ -763,6 +808,11 @@
                 windowWidth: el.scrollWidth,
                 windowHeight: el.scrollHeight,
             });
+
+            // FIX: Remove export class immediately after capture
+            el.classList.remove('export-mode');
+
+            return canvas;
         }
 
         /* ── Download as PDF ── */

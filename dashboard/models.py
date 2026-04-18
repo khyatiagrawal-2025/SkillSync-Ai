@@ -86,16 +86,7 @@ class SavedAIRoadmap(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.username}"
-    
 
-# Ye AI ka data save karne ke liye table hai
-# class AICache(models.Model):
-#     prompt_text = models.CharField(max_length=500, unique=True) 
-#     ai_response = models.TextField() 
-#     created_at = models.DateTimeField(auto_now_add=True) 
-
-#     def __str__(self):
-#         return self.prompt_text
     
 # ai response ko save karne ke liye table hai
 class AICache(models.Model):
