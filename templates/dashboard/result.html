@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSync-AI | {{ data.user_skill }} Roadmap</title>
+    <title>SkillSync-AI | Personalized Roadmap</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
@@ -323,12 +323,9 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ── HERO ── */
-        /* ── HERO ── */
         .hero {
             padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 4vw, 2.5rem);
             text-align: center;
-            
-            /* 👇 NAYA BACKGROUND COLOR & GLASS EFFECT 👇 */
             background: rgba(6, 20, 40, 0.65);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -368,9 +365,9 @@
         }
 
         .hero-title {
-            font-size: clamp(2.2rem, 7vw, 4.5rem);
+            font-size: clamp(1.8rem, 5vw, 3.5rem);
             font-weight: 900;
-            line-height: 1.05;
+            line-height: 1.2;
             letter-spacing: -0.02em;
             text-transform: capitalize;
             background: linear-gradient(135deg, #ffffff 0%, #a8d8ff 35%, var(--cyan) 65%, #56cfff 100%);
@@ -464,17 +461,22 @@
             color: var(--cyan-dim);
         }
 
-        /* ── PROSE (TEXT & LIST ALIGNMENT FIXES) ── */
+        /* ── PROSE (TEXT & LIST ALIGNMENT FIXES - FULL WIDTH) ── */
         .prose-wrap {
             padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2rem);
+            width: 100%; /* Force full width container */
         }
 
-        /* FORCE left alignment inside AI content */
+        /* OVERRIDE TAILWIND MAX-WIDTH */
         .prose-wrap.prose {
+            max-width: 100% !important; /* Bimari ka ilaaj: No more half-page text! */
+            width: 100% !important;
             text-align: left !important;
         }
 
-        .prose-wrap.prose :is(h1,h2,h3,h4) { color: #cceeff !important; font-weight: 700; text-align: left !important; }
+        .prose-wrap.prose :is(h1,h2,h3,h4,p,ul,ol,li,blockquote,pre) { 
+            max-width: 100% !important; 
+        }
 
         .prose-wrap.prose h2 {
             display: flex;
@@ -500,7 +502,6 @@
 
         .prose-wrap.prose p { color: #7ab3d4; line-height: 1.8; font-size: clamp(14px, 2vw, 15px); text-align: left !important; }
 
-        /* 🔥 FIX FOR LISTS: Tailwind resets bullets, this brings them back properly indented 🔥 */
         .prose-wrap.prose ul {
             list-style-type: disc !important;
             padding-left: 1.5rem !important;
@@ -547,6 +548,7 @@
             border-radius: 12px !important;
             box-shadow: inset 0 0 20px rgba(0,50,100,0.3);
             text-align: left !important;
+            overflow-x: auto;
         }
 
         .prose-wrap.prose blockquote {
@@ -558,27 +560,72 @@
             font-style: normal;
         }
 
-        .prose-wrap.prose table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; text-align: left !important; }
+        /* --- NAYI TABLE CSS (FULL WIDTH & RESPONSIVE) --- */
+        .prose-wrap.prose table { 
+            width: 100% !important; 
+            max-width: 100% !important;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin: 2rem 0;
+            border-radius: 12px;
+            overflow: hidden; 
+            border: 1px solid rgba(0, 180, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            table-layout: auto; 
+            display: table !important; /* Ye force karega table ko poori jagah lene ke liye */
+        }
+
+        .prose-wrap.prose thead {
+            background: linear-gradient(90deg, rgba(0, 100, 200, 0.25), rgba(0, 150, 220, 0.15));
+        }
 
         .prose-wrap.prose thead th {
-            background: rgba(0,100,200,0.2);
-            color: var(--cyan-dim);
-            font-weight: 700;
-            padding: 10px 14px;
-            font-size: 13px;
-            text-align: left;
-            border-bottom: 1px solid rgba(0,180,255,0.25);
+            color: var(--cyan) !important;
+            font-weight: 800;
+            padding: 16px 20px !important;
+            font-size: 14px;
+            text-align: left !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3) !important;
+        }
+
+        .prose-wrap.prose tbody tr {
+            transition: background 0.2s ease;
         }
 
         .prose-wrap.prose tbody td {
-            padding: 10px 14px;
-            border-bottom: 1px solid rgba(0,100,150,0.15);
-            font-size: 14px;
-            color: var(--text-secondary);
+            padding: 16px 20px !important;
+            border-bottom: 1px solid rgba(0, 180, 255, 0.08) !important;
+            font-size: 14.5px;
+            color: var(--text-primary) !important;
+            line-height: 1.6;
+            vertical-align: top;
         }
-        .prose-wrap.prose tbody tr:last-child td { border-bottom: none; }
-        .prose-wrap.prose tbody tr:hover td { background: rgba(0,180,255,0.04); }
-        .prose-wrap.prose hr { border-color: rgba(0,180,255,0.1); margin: 2rem 0; }
+
+        .prose-wrap.prose tbody tr:nth-child(even) {
+            background: rgba(0, 180, 255, 0.02);
+        }
+
+        .prose-wrap.prose tbody tr:last-child td { 
+            border-bottom: none !important; 
+        }
+
+        .prose-wrap.prose tbody tr:hover { 
+            background: rgba(0, 212, 255, 0.08); 
+        }
+        
+        /* Mobile par table horizontal scroll ho */
+        @media (max-width: 768px) {
+            .table-responsive-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .prose-wrap.prose table {
+                min-width: 600px;
+            }
+        }
 
         /* ── FOOTER ── */
         footer {
@@ -610,13 +657,8 @@
             footer { justify-content: center; text-align: center; }
         }
 
-        @media (max-width: 360px) {
-            .topbar-actions { gap: 5px; }
-            .dl-menu { right: -10px; }
-        }
-
         /* ── EXPORT FIX FOR HTML2CANVAS ── */
-                .export-mode .hero-title {
+        .export-mode .hero-title {
             background: none !important;
             background-clip: initial !important;
             -webkit-background-clip: initial !important;
@@ -652,7 +694,7 @@
                 <div class="dl-wrapper">
                     <button class="dl-btn" id="dlBtn" aria-haspopup="true" aria-expanded="false">
                         <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 1v9M5 7l3 3 3-3M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 1v9M5 7l3 3-3-3M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <span class="btn-label">Download</span>
                         <svg class="caret" viewBox="0 0 10 10" fill="none">
@@ -693,19 +735,19 @@
         <div id="captureZone">
 
             <section class="hero">
-                <div class="hero-badge">AI-Powered Roadmap</div>
+                <div class="hero-badge">AI Career Architect</div>
                 <h1 class="hero-title">{{ data.user_skill }}</h1>
-                <p class="hero-sub">Your personalized learning path, curated by AI to take you from beginner to expert.</p>
+                <p class="hero-sub">Your personalized transition path, analyzed from GitHub and curated by AI.</p>
             </section>
 
             <div class="chips">
                 <div class="chip">
                     <div class="chip-dot" style="background:var(--cyan); box-shadow:0 0 6px var(--cyan);"></div>
-                    Structured Path
+                    Profile Analyzed
                 </div>
                 <div class="chip">
                     <div class="chip-dot" style="background:#56cfff; box-shadow:0 0 6px #56cfff;"></div>
-                    Step-by-Step
+                    Skill Gap Bridged
                 </div>
                 <div class="chip">
                     <div class="chip-dot" style="background:var(--blue-bright); box-shadow:0 0 6px var(--blue-bright);"></div>
@@ -713,7 +755,7 @@
                 </div>
                 <div class="chip">
                     <div class="chip-dot" style="background:#00e0a0; box-shadow:0 0 6px #00e0a0;"></div>
-                    Beginner Friendly
+                    Actionable Steps
                 </div>
             </div>
 
@@ -726,21 +768,25 @@
                                 <path d="M8 1L10.09 5.26L14.73 5.95L11.365 9.24L12.18 13.87L8 11.67L3.82 13.87L4.635 9.24L1.27 5.95L5.91 5.26L8 1Z" fill="#00d4ff"/>
                             </svg>
                         </div>
-                        <span class="card-label">Your Roadmap</span>
+                        <span class="card-label">Your Transition Roadmap</span>
                     </div>
 
-                    <div class="prose-wrap prose prose-invert prose-lg max-w-none">
-                        {{ data.recommendation|safe }}
+                    <div class="prose-wrap prose prose-invert prose-lg max-w-none w-full !max-w-full">
+                        <div class="table-responsive-wrapper">
+                            {{ data.recommendation|safe }}
+                        </div>
                     </div>
 
                 </div>
             </main>
 
-        </div><footer>
+        </div>
+        
+        <footer>
             <div class="footer-left">
                 Generated by <b>SkillSync-AI</b> &mdash; Powered by Team 13 (APK)
             </div>
-            <div class="footer-right">Personalized learning paths for every skill</div>
+            <div class="footer-right">Personalized learning paths for every developer</div>
         </footer>
 
     </div>
@@ -796,7 +842,6 @@
         async function captureCanvas() {
             const el = document.getElementById('captureZone');
             
-            // FIX: Add export class before capturing to remove gradient issue
             el.classList.add('export-mode');
 
             const canvas = await html2canvas(el, {
@@ -809,7 +854,6 @@
                 windowHeight: el.scrollHeight,
             });
 
-            // FIX: Remove export class immediately after capture
             el.classList.remove('export-mode');
 
             return canvas;
@@ -836,7 +880,7 @@
                 });
 
                 pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
-                const skillName = (document.querySelector('.hero-title')?.textContent || 'roadmap').trim().replace(/\s+/g, '_').toLowerCase();
+                const skillName = (document.querySelector('.hero-title')?.textContent || 'roadmap').trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
                 pdf.save(`skillsync_${skillName}_roadmap.pdf`);
                 showToast('PDF downloaded!', false, true);
             } catch (err) {
@@ -853,7 +897,7 @@
             try {
                 const canvas = await captureCanvas();
                 const link = document.createElement('a');
-                const skillName = (document.querySelector('.hero-title')?.textContent || 'roadmap').trim().replace(/\s+/g, '_').toLowerCase();
+                const skillName = (document.querySelector('.hero-title')?.textContent || 'roadmap').trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
                 link.download = `skillsync_${skillName}_roadmap.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();

@@ -48,7 +48,7 @@ In today's rapidly evolving tech landscape, individuals often find it challengin
 ## Team Members
 - **Khyati Agrawal** - Frontend & Concept  
 - **Ayush Mishra** - Backend Development  
-- **Pritam Vishwakarma** - AI/ML Integration  
+- **S.Pratap Vishwakarma** - AI/ML Integration  
 
 ## Contribution
 We welcome contributions to SkillSync AI! Please check the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.

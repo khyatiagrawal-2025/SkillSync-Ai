@@ -832,7 +832,7 @@
           <span style="font-size:.78rem;font-weight:700;color:#c4b5fd">{{ user.profile.xp_points|default:"2,840" }} / {{ user.profile.xp_for_next|default:"3,000" }} XP</span>
         </div>
         <div style="height:8px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden">
-          <div style="height:100%;width:{{ user.profile.xp_percent|default:'94' }}%;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#3b82f6,#06b6d4);position:relative;overflow:hidden">
+          <div style="height:100%;width:{{ user.profile.xp_percent|default:'94' }}%;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#3b82f6,#06b6d4);position:relative; overflow:hidden" >
             <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2.5s infinite;transform:translateX(-100%)"></div>
           </div>
         </div>

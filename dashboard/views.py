@@ -1,46 +1,46 @@
 import os
-from pathlib import Path
-from google import genai
-#from import Groq
+import requests
 import markdown
-from django.shortcuts import get_object_or_404
-
+from pathlib import Path
 from dotenv import load_dotenv
-from django.conf import settings
 
-from django.shortcuts import render
+from google import genai
+
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.views.decorators.cache import never_cache
 
-# Aapke saare models ek hi line mein import kar diye hain
-from .models import AIQuery, UserProgressProfile, UserSkill, Task, UserBadge, SavedAIRoadmap
-from home import models # Agar home app se kuch chahiye ho toh
+# Aapke saare models import ho rahe hain
+from .models import UserProgressProfile, UserSkill, Task, UserBadge, SavedAIRoadmap
 
-# .env file se API setup
+# ==========================================
+# ⚙️ ENVIRONMENT & API SETUP
+# ==========================================
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
+env_path = os.path.join(BASE_DIR, '.env')
+load_dotenv(env_path)
 
-# API key from .env file
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    print("Error: GEMINI_API_KEY nahi mili! Check karein ki .env file mein hai.")
+# Keys fetch karna
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GITHUB_TOKEN = os.getenv("GITHUB_API_KEY")
+
+# Gemini Client Initialize karna
+if not GEMINI_API_KEY:
+    print("⚠️ WARNING: GEMINI_API_KEY .env file mein nahi mili!")
     client = None
 else:
-    client = genai.Client(api_key=API_KEY)
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
 
-# -------------------------------------------------------------------
-# 1. Dashboard View
-# -------------------------------------------------------------------
+# ==========================================
+# 📊 1. MAIN DASHBOARD VIEW
+# ==========================================
 @login_required
 @never_cache
 def dashboard(request):
-    # Current logged-in user ko hi student maan rahe hain
     student = request.user 
-    # Total registered users count
     total_students = User.objects.count()
-
     context = {
         'total_students': total_students,
         'student': student,
@@ -49,96 +49,142 @@ def dashboard(request):
     return render(request, "dashboard/dashboard.html", context)
 
 
-# -------------------------------------------------------------------
-# 2. Roadmap Base View
-# -------------------------------------------------------------------
+# ==========================================
+# 🗺️ 2. ROADMAP BASE VIEW
+# ==========================================
 def roadmap_view(request):
     return render(request, 'dashboard/roadmap.html')
 
 
-# -------------------------------------------------------------------
-# 3. Settings View
-# -------------------------------------------------------------------
+# ==========================================
+# ⚙️ 3. SETTINGS VIEW
+# ==========================================
 @login_required
 def settings_view(request):
     return render(request, "dashboard/settings.html")
 
 
-# -------------------------------------------------------------------
-# 4. AI Skill Advisor (Generate & Save Roadmap)
-# -------------------------------------------------------------------
+# ==========================================
+# 🤖 4. AI SKILL ADVISOR (GITHUB + GOAL)
+# ==========================================
 @login_required
 def skill_advisor(request):
     if request.method == "POST":
-        skill = request.POST.get('skill')
-
-        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-        
-        # 🔥 SMART PROMPT: AI ko text aur table dono use karne ka instruction
-        prompt = f"""
-        Act as an expert mentor. Give me a detailed, step-by-step roadmap to learn {skill} for a complete beginner. 
-        
-        Please structure your response intelligently:
-        1. Use clear text paragraphs and bullet points for explanations, tips, and theory.
-        2. MUST include a Markdown Table to summarize the timeline, topics, or resources (e.g., Week | Topic | Resources).
-        
-        Keep the formatting clean and engaging.
-        """
+        github_username = request.POST.get('github_id', '').strip()
+        user_interest = request.POST.get('interest', '').strip()
 
         try:
-            # 1. Gemini se data mangwana
+            # --- STEP A: Fetch GitHub Data (Safe Mode) ---
+            repo_string = "No active repositories found or API limit reached."
+            bio = "Not available"
+            public_repos = 0
+            
+            if github_username:
+                try:
+                    user_url = f"https://api.github.com/users/{github_username}"
+                    
+                    # Agar Token hai, toh limits badhane ke liye headers bhejenge
+                    headers = {}
+                    if GITHUB_TOKEN:
+                        headers['Authorization'] = f"token {GITHUB_TOKEN}"
+
+                    # 5-second timeout taaki server hang na ho
+                    user_response = requests.get(user_url, headers=headers, timeout=5) 
+                    
+                    if user_response.status_code == 200:
+                        user_data = user_response.json()
+                        repos_data = requests.get(f"{user_url}/repos?sort=updated&per_page=5", headers=headers, timeout=5).json()
+                        
+                        bio = user_data.get('bio', 'No bio provided')
+                        public_repos = user_data.get('public_repos', 0)
+                        
+                        repo_details = []
+                        for repo in repos_data:
+                            if isinstance(repo, dict):
+                                lang = repo.get('language') or 'Unknown'
+                                repo_details.append(f"- {repo.get('name')} (Language: {lang})")
+                        
+                        if repo_details:
+                            repo_string = "\n".join(repo_details)
+                except requests.exceptions.RequestException as e:
+                    print(f"⚠️ GitHub API Fetch Error (Ignored): {e}")
+
+            # --- STEP B: Smart Prompt Construction ---
+            prompt = f"""
+            Act as an expert tech career mentor. 
+            
+            Developer's Current Profile (from GitHub):
+            - Username: {github_username if github_username else 'Not Provided'}
+            - Bio: {bio}
+            - Total Public Repos: {public_repos}
+            - Recent Projects & Main Languages: 
+            {repo_string}
+            
+            THEIR FUTURE GOAL / TARGET ROLE: "{user_interest}"
+            
+            Based strictly on their existing skills (if GitHub data is available) and what they want to learn (their goal), provide a clear, step-by-step learning roadmap to bridge the gap.
+            
+            Structure your response:
+            1. Analyze their current skill level.
+            2. Explain how their past knowledge helps with their new goal.
+            3. Provide a step-by-step roadmap to achieve the goal.
+            4. MUST include a detailed Markdown Table summarizing the Timeline, Topics, and Resources.
+            """
+
+            # --- STEP C: Gemini API Call ---
+            if not client:
+                raise Exception("Gemini API key configure nahi hui hai. Kripya .env file check karein.")
+
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=prompt
             )
             ai_text = response.text
 
-            # 2. Markdown ko HTML mein convert karna (Text ko paragraph, Table ko <table> banayega)
+            # --- STEP D: Markdown to HTML Conversion ---
             html_content = markdown.markdown(ai_text, extensions=['tables', 'fenced_code'])
 
-            # 3. AIQuery table mein save karna (Aapka purana DB)
-            query_obj = AIQuery.objects.create(
-                user_skill=skill, 
-                recommendation=html_content
-            )
+            # --- STEP E: Prepare Temporary Data Object for UI ---
+            class TempData:
+                user_skill = f"{github_username} ➔ {user_interest}" if github_username else user_interest
+                recommendation = html_content
+            
+            query_obj = TempData()
 
-            # 4. SavedAIRoadmap table mein save karna (Progress Page ke liye)
+            # --- STEP F: Save to Database ---
+            title_text = f"{github_username} to {user_interest.capitalize()}" if github_username else f"{user_interest.capitalize()} Roadmap"
+            
             SavedAIRoadmap.objects.create(
                 user=request.user,
-                title=f"{skill.capitalize()} Roadmap", 
+                title=title_text[:255], 
                 ai_content=html_content
             )
             
-            # 5. Result page par final HTML bhejna
             return render(request, 'dashboard/result.html', {'data': query_obj})
 
         except Exception as e:
-            # Agar koi API ya DB error aaye toh crash hone ke bajaye error.html par bhejna
-            print(f"MAIN ERROR YE HAI: {e}") 
-            return render(request, 'dashboard/error.html', {'error': str(e)})
+            print(f"🔴 CRITICAL ERROR IN SKILL ADVISOR: {e}") 
+            # Fallback error response for the UI
+            class TempError:
+                user_skill = "Error Occurred"
+                recommendation = f"<h3>Oops! Kuch technical issue aa gaya:</h3><p>{str(e)}</p><p>Please try again in a few moments.</p>"
+            return render(request, 'dashboard/result.html', {'data': TempError()})
 
-    # Agar request GET hai (page normal khula hai form fill karne ke liye)
     return render(request, 'dashboard/roadmap.html')
 
-# -------------------------------------------------------------------
-# 5. Progress Dashboard (Main UI View)
-# -------------------------------------------------------------------
+
+# ==========================================
+# 📈 5. PROGRESS DASHBOARD VIEW
+# ==========================================
 @login_required
 def progress_dashboard(request):
     user = request.user
-    
-    # 1. Get or Create Profile
     profile, created = UserProgressProfile.objects.get_or_create(user=user)
-    
-    # 2. Fetch Skills, Tasks, and Badges
     skills = UserSkill.objects.filter(user=user).order_by('-proficiency')
     recent_tasks = Task.objects.filter(user=user).order_by('-created_at')[:10]
     earned_badges = UserBadge.objects.filter(user=user).select_related('badge')
-    
-    # 3. Fetch Saved AI Roadmaps (Ye ab Skill Advisor se aayega)
     saved_roadmaps = SavedAIRoadmap.objects.filter(user=user).order_by('-generated_at')
     
-    # 4. Next Level Math
     xp_for_next_level = profile.current_level * 250 
     xp_remaining = max(0, xp_for_next_level - profile.total_xp)
     level_progress_pct = (profile.total_xp / xp_for_next_level) * 100 if xp_for_next_level > 0 else 0
@@ -151,12 +197,14 @@ def progress_dashboard(request):
         'saved_roadmaps': saved_roadmaps,
         'xp_remaining': xp_remaining,
         'xp_for_next_level': xp_for_next_level,
-        'level_progress_pct': min(level_progress_pct, 100), # Cap at 100%
+        'level_progress_pct': min(level_progress_pct, 100),
     }
-    
     return render(request, 'dashboard/progress.html', context)
 
-#roadmap_detail view for showing full roadmap content
+
+# ==========================================
+# 📄 6. SAVED ROADMAP DETAIL VIEW
+# ==========================================
 @login_required
 def roadmap_detail(request, roadmap_id):
     roadmap = get_object_or_404(SavedAIRoadmap, id=roadmap_id, user=request.user)
@@ -164,7 +212,6 @@ def roadmap_detail(request, roadmap_id):
         'roadmap': roadmap
     }
     return render(request, 'dashboard/roadmap_detail.html', context)
-
 
 #-----------------------------------------------------------------#
 #---GROQ INTEGRATION FOR AI ADVISOR (ALTERNATIVE TO GEMINI)---
